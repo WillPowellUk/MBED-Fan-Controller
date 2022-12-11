@@ -1,0 +1,18 @@
+{
+    "target_overrides": 
+    {
+        "*": 
+        {
+            "platform.stdio-convert-newlines": true
+            
+        },
+        "*": 
+        {
+            "target.printf_lib": "std"
+        },
+        "NUCLEO_F070RB": 
+        {
+            "target.components_add" : ["SD"]
+        }
+    }
+}
