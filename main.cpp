@@ -1,4 +1,5 @@
 #include "mbed.h"
+// #include <inttypes.h>
 
 // Settings
 #include "Settings.h"
@@ -12,6 +13,7 @@
 #include "QuadEncoderX4.hpp"
 #include "ButtonHandler.hpp"
 #include <cstdint>
+ 
 
 int main() 
 {
@@ -30,14 +32,27 @@ int main()
     // main LCDUI object that initialises child menus with LCDBaseClass
     LCDUI lcdUI(lcdBase);
 
-    // THREADS (does not include fan controller which is initiated through user input)
+    // THREADS (does not include fan controller which is initiated during user input)
     lcdUI.init(); // configures lcd and starts main thread for UI
     button.init(); // starts main thread for button handling
     
     // main must be kept running (but not used)
     while(true) 
     {
+        // mbed_stats_thread_t* stats = new mbed_stats_thread_t[8];
+        // int count = mbed_stats_thread_get_each(stats, 8);
+        // for (int i = 0; i < count; i++) {
+        //     printf("ID: 0x%" PRIx32 "\n", stats[i].id);
+        //     printf("Name: %s \n", stats[i].name);
+        //     printf("State: %" PRId32 "\n", stats[i].state);
+        //     printf("Priority: %" PRId32 "\n", stats[i].priority);
+        //     printf("Stack Size: %" PRId32 "\n", stats[i].stack_size);
+        //     printf("Stack Space: %" PRId32 "\n", stats[i].stack_space);
+        //     printf("\n");
+        // }
+        // delete[] stats;
+
         // printf("Running\n");
-        ThisThread::sleep_for(500ms);
+        ThisThread::sleep_for(1000ms);
     }
 }

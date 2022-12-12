@@ -2,6 +2,8 @@
 #include "IMenu.hpp"
 #include "Settings.h"
 #include "Utilities.hpp"
+#include <chrono>
+#include <cstdint>
 #include <stdio.h>
 
 enum ClosedLoopMethod
@@ -36,11 +38,28 @@ public:
         lcdBase->lcd.printf("%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
 
         char actualSpeedStr[7];
-        std::sprintf(actualSpeedStr, "%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
+        std::sprintf(actualSpeedStr, "%uRPM", desiredSpeedRPM);
         lcdBase->lcd.printRight(actualSpeedStr, 1);
+
+        // start screen refresh timer
+        screenRefreshTimer.reset();
+        screenRefreshTimer.start();
 
         while(true)
         {
+            // refresh screen periodically
+            if(screenRefreshTimer.elapsed_time() > std::chrono::duration_cast<std::chrono::microseconds>(Settings::LCD::screenRefreshRate_us))
+            {
+                screenRefreshTimer.reset();
+                screenRefreshTimer.start();
+            }
+            // print title, desired and actual speed
+            lcdBase->lcd.printCentral(MenuTitle);
+            lcdBase->lcd.locate(0,1);
+            lcdBase->lcd.printf("%uRPM", desiredSpeedRPM);
+            std::sprintf(actualSpeedStr, "%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
+            lcdBase->lcd.printRight(actualSpeedStr, 1);
+
             // if user rotates encoder, increment or decrement fan speed
             if(lcdBase->encoder.getTics() != 0)
             {
@@ -72,4 +91,5 @@ public:
 
 private:
     ClosedLoopMethod method;
+    Timer screenRefreshTimer;
 };

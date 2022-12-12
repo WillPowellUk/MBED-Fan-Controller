@@ -114,7 +114,7 @@ namespace Settings
         const constexpr float maxContrast = 1.0f;
         const constexpr float minContrast = 0.3f;
 
-        const constexpr uint16_t refreshRate_ms = 1000;
+        const constexpr uint64_t screenRefreshRate_us = 500e3;
     }
 
     namespace BuiltInButton

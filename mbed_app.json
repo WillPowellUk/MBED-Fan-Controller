@@ -10,6 +10,10 @@
         {
             "target.printf_lib": "std"
         },
+        "*": 
+        {            
+            "platform.thread-stats-enabled": true            
+        },
         "NUCLEO_F070RB": 
         {
             "target.components_add" : ["SD"]
