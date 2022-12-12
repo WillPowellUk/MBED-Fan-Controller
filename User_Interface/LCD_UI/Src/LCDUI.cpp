@@ -8,20 +8,26 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     // initialise all the menu objects
     , mainMenu("Main Menu", &lcdBase, nullptr, &mainMenuChilds)
     , settingsMenu("Settings", &lcdBase, &mainMenu, &settingsMenuChilds)
-    , brightnessMenu("Brightness", &lcdBase, &settingsMenu)
-    , contrastMenu("Contrast", &lcdBase, &settingsMenu)
+    , fanControlMenu("Fan Control", &lcdBase, &mainMenu, &fanControlMenuChilds)
+    , closedLoopMenu("Closed Loop", &lcdBase, &fanControlMenu, &closedLoopMenuChilds)
+    , pidMenu(ClosedLoopMethod::PID, "PID", &lcdBase, &closedLoopMenu)
+    , brightnessMenu(MenuType::Brightness, "Brightness", &lcdBase, &settingsMenu)
+    , contrastMenu(MenuType::Contrast, "Contrast", &lcdBase, &settingsMenu)
+    , openLoopMenu(MenuType::OpenLoop, "Open Loop", &lcdBase, &fanControlMenu)
     // set Main Thread with relatively high priority and 4096 bytes stack size
     , thread(osPriorityAboveNormal, 4096, nullptr, "LCDUI") 
 {
-    mainMenuChilds = {&settingsMenu};
+    mainMenuChilds = {&fanControlMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
+    fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
+    closedLoopMenuChilds = {&pidMenu};
 }
 
 
 void LCDUI::init()
 {
-    //lcdBase.lcd.setBrightness(Settings::LCD::defaultBrightness);
-    //lcdBase.lcd.setContrast(Settings::LCD::defaultContrast);
+    lcdBase.lcd.setBrightness(Settings::LCD::defaultBrightness);
+    lcdBase.lcd.setContrast(Settings::LCD::defaultContrast);
 
     thread.start(callback(this, &LCDUI::MainThread));
 }

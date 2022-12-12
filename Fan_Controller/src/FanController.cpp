@@ -2,12 +2,13 @@
 #include "Settings.h"
 #include <cstdint>
 #include <stdint.h>
+#include "Utilities.hpp"
 
 FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOutputPin_)
     : tachometerPin(tachometerPin_)
     , pwmOutputPin(pwmOutputPin_)
     // set Main Thread with normal priority and 2048 bytes stack size
-    , thread(osPriorityBelowNormal, 2048, nullptr, "FanController") 
+    , thread(osPriorityAboveNormal, 2048, nullptr, "FanController") 
 {
     // set high frequency PWM for fan control, to improve fan speed consistency (20kHz so not audible)
     pwmOutputPin.period_us(50);
@@ -18,7 +19,15 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
 
 void FanController::init()
 {
+    // start main thread
     thread.start(callback(this, &FanController::MainThread));
+}
+
+void FanController::deinit()
+{
+    // stops fan and terminates thread
+    pwmOutputPin.write(0);
+    thread.terminate();
 }
 
 
@@ -62,8 +71,6 @@ void FanController::MainThread()
         //     else if (PWM_Output < 0.0) PWM_Output = 0.0;
         //     pwmOutputPin.write(PWM_Output);
         // }
-
-
         
         ThisThread::sleep_for(Settings::Fan::threadTimeInterval_ms);
     }
@@ -112,10 +119,10 @@ void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 }
 
 
-void FanController::setDesiredSpeed_Percentage(const uint16_t speed)
+void FanController::setDesiredSpeed_Percentage(const float speed)
 {
-    desiredSpeed_RPM = (speed/100) * Settings::Fan::MaxSpeed_RPM;
-    pwmOutputPin.write(static_cast<float>(speed)/100);
+    desiredSpeed_RPM = speed * Settings::Fan::MaxSpeed_RPM;
+    pwmOutputPin.write(Utilities::map(speed, 0.0, 1.0, Settings::Fan::minPWMOut, 1.0));
 }
 
 

@@ -17,6 +17,10 @@ public:
     */
     void init();
 
+    /** Stops fan and terminates thread
+    */
+    void deinit();
+
     /** Main thread to control fan speed, using PID
     */
     void MainThread();
@@ -29,7 +33,7 @@ public:
     /** Setter for desiredSpeed_RPM - target speed as a percentage for control system
     @param speed speed as a percentage of max speed
     */
-    void setDesiredSpeed_Percentage(const uint16_t speed);
+    void setDesiredSpeed_Percentage(const float speed);
 
     /** Getter for currentSpeed_RPM
     @return current speed of fan in RPM

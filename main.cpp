@@ -30,18 +30,14 @@ int main()
     // main LCDUI object that initialises child menus with LCDBaseClass
     LCDUI lcdUI(lcdBase);
 
-    // fan.setDesiredSpeed_RPM(1500);
-
-    // THREADS
-   // lcdUI.init(); // configures lcd and starts main thread for UI
-    //button.init(); // starts main thread for button handling
-   // fan.init(); // starts main thread that measures speed and controls via PID of fan
-
+    // THREADS (does not include fan controller which is initiated through user input)
+    lcdUI.init(); // configures lcd and starts main thread for UI
+    button.init(); // starts main thread for button handling
+    
     // main must be kept running (but not used)
     while(true) 
     {
-        int16_t b = encoder.getMechanicalTics();
-        printf("%i", b);
+        // printf("Running\n");
         ThisThread::sleep_for(500ms);
     }
 }

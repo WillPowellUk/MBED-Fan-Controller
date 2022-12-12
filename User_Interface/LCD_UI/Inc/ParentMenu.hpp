@@ -3,13 +3,13 @@
 #include <vector>
 
 
-class GenericMenu : public IMenu
+class ParentMenu : public IMenu
 {
 public:
     /** Constructor
     @param Title takes in title of Menu
     */
-    GenericMenu(const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu, std::vector<IMenu*>* childMenus)
+    ParentMenu(const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu, std::vector<IMenu*>* childMenus)
         : IMenu(title, lcdBaseClass, parentMenu, childMenus)
     {
     }
@@ -31,7 +31,6 @@ public:
             // if user rotates encoder, scroll through childMenus
             if((lcdBase->encoder.getMechanicalTics()) != 0)
             {
-                lcdBase->lcd.printCentral("Boobs");
                 // increment or decrement through menus (infinite scrolling)
                 if (lcdBase->encoder.getMechanicalTics() > 0) childIndex = (childIndex + 1) % childMenus->size();
                 else childIndex = (childIndex - 1) % childMenus->size();
@@ -52,7 +51,10 @@ public:
                 childMenus->at(childIndex)->run();
             }
             // return to previous menu (unless no parent menu i.e. Main Menu) on long press
-            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) parentMenu->run();
+            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) 
+            {
+                parentMenu->run();
+            }
             
             // sleep to ensure other threads have time to run
             ThisThread::sleep_for(10ms);

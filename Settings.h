@@ -62,8 +62,11 @@ namespace Settings
         const constexpr uint8_t TachoPulsesPerRev = 4;
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
+        // Minimum pwm required to start rotating the fan
+        const constexpr float minPWMOut = 0.5;
 
         /*  TUNING PARAMETERS */
+
         // interval time for main thread - updating fan speed and sending new PID values
         // More accurate fan speed with longer interval, however control system is slower to respond to error
         const constexpr uint16_t threadTimeInterval_ms = 100;
@@ -103,8 +106,13 @@ namespace Settings
             PinName contrast = LCD_Contrast;
             PinName backlight = LCD_Backlight;
         };
-        const constexpr float defaultBrightness = 1.0f;
+        const constexpr float defaultBrightness = 0.5f;
+        const constexpr float maxBrightness = 1.0f;
+        const constexpr float minBrightness = 0.3f;
+
         const constexpr float defaultContrast = 0.5f;
+        const constexpr float maxContrast = 1.0f;
+        const constexpr float minContrast = 0.3f;
 
         const constexpr uint16_t refreshRate_ms = 1000;
     }

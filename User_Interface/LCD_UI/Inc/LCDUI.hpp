@@ -5,10 +5,9 @@
 
 // All the Menus
 #include "IMenu.hpp"
-#include "GenericMenu.hpp"
-#include "BrightnessMenu.hpp"
-#include "ContrastMenu.hpp"
-
+#include "ParentMenu.hpp"
+#include "BarMenu.hpp"
+#include "ClosedLoopMenu.hpp"
 
 
 /* This class handles the setup of Menu subclasses and starts the UI thread*/
@@ -39,18 +38,23 @@ private:
     Contrast, Brightness        OpenLoop, ClosedLoop        Track1, Track2...
     */
 
-    // Menus (with number of child classes)
-    GenericMenu mainMenu;
-    GenericMenu settingsMenu;
-    BrightnessMenu brightnessMenu;
-    ContrastMenu contrastMenu;
+    // Parent Menus with child / submenus
+    ParentMenu mainMenu;
+    ParentMenu settingsMenu;
+    ParentMenu fanControlMenu;
+    ParentMenu closedLoopMenu;
 
-    // child menus (sub menus)        
+    // child menus
+    BarMenu brightnessMenu;
+    BarMenu contrastMenu;
+    BarMenu openLoopMenu;
+    ClosedLoopMenu pidMenu;
+
+    // child menus / sub menus for each parent menu      
     std::vector<IMenu*> mainMenuChilds;
     std::vector<IMenu*> settingsMenuChilds;
-
-    // 
-    void selectMenu();
+    std::vector<IMenu*> fanControlMenuChilds;
+    std::vector<IMenu*> closedLoopMenuChilds;
 
     // Main thread will run concurrently with other tasks
     Thread thread;
