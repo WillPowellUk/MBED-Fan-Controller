@@ -42,20 +42,16 @@ public:
                 lcdBase->lcd.locate(0,1);
                 lcdBase->lcd.printf("%s", childMenus->at(childIndex)->MenuTitle);
             }
+
             // check if button is pressed
             Button::state state = lcdBase->button.checkNewPresses();
+
             // select active child menu on short press
-            if (state == Button::state::Short_Press) 
-            {
-                lcdBase->lcd.printCentral("Banter");
-                childMenus->at(childIndex)->run();
-            }
+            if (state == Button::state::Short_Press) childMenus->at(childIndex)->run();
+        
             // return to previous menu (unless no parent menu i.e. Main Menu) on long press
-            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) 
-            {
-                parentMenu->run();
-            }
-            
+            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr))  parentMenu->run();
+
             // sleep to ensure other threads have time to run
             ThisThread::sleep_for(10ms);
         }

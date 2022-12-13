@@ -48,24 +48,31 @@ public:
         while(true)
         {
             // refresh screen periodically
-            if(screenRefreshTimer.elapsed_time() > std::chrono::duration_cast<std::chrono::microseconds>(Settings::LCD::screenRefreshRate_us))
+            if(screenRefreshTimer.elapsed_time() > std::chrono::microseconds(Settings::LCD::screenRefreshRate_us))
             {
+                // reset timer
                 screenRefreshTimer.reset();
                 screenRefreshTimer.start();
+
+                // print title, desired and actual speed
+                lcdBase->lcd.printCentral(MenuTitle);
+                lcdBase->lcd.locate(0,1);
+                lcdBase->lcd.printf("%uRPM", desiredSpeedRPM);
+                std::sprintf(actualSpeedStr, "%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
+                lcdBase->lcd.printRight(actualSpeedStr, 1);
+
             }
-            // print title, desired and actual speed
-            lcdBase->lcd.printCentral(MenuTitle);
-            lcdBase->lcd.locate(0,1);
-            lcdBase->lcd.printf("%uRPM", desiredSpeedRPM);
-            std::sprintf(actualSpeedStr, "%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
-            lcdBase->lcd.printRight(actualSpeedStr, 1);
 
             // if user rotates encoder, increment or decrement fan speed
-            if(lcdBase->encoder.getTics() != 0)
+            if(lcdBase->encoder.getMechanicalTics() != 0)
             {
-                // one tic corresponds to one RPM
-                desiredSpeedRPM += lcdBase->encoder.getTics();
+                // one mech tic corresponds to 10 RPM
+                desiredSpeedRPM += (lcdBase->encoder.getMechanicalTics() * 10);
                 lcdBase->encoder.reset();
+
+                // limit it to viable range and set
+                if (desiredSpeedRPM > Settings::Fan::MaxSpeed_RPM) desiredSpeedRPM = Settings::Fan::MaxSpeed_RPM;
+                else if (desiredSpeedRPM < 0) desiredSpeedRPM = 0;
                 lcdBase->fan.setDesiredSpeed_RPM(desiredSpeedRPM);
 
                 // print title, desired and actual speed

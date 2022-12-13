@@ -10,8 +10,8 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
     // set Main Thread with normal priority and 2048 bytes stack size
     , thread(osPriorityRealtime, 2048, nullptr, "FanController") 
 {
-    // set high frequency PWM for fan control, to improve fan speed consistency (20kHz so not audible)
-    pwmOutputPin.period_us(50);
+    // set high frequency PWM for fan control
+    pwmOutputPin.period_us(20000);
     // attach callback function calcFanSpeed on falling edge (pin pulled up in hardware)
     tachometerPin.fall(callback(this, &FanController::tachometerISR));
 }
@@ -108,14 +108,15 @@ void FanController::calculateCurrentSpeed()
     // reset ISR variables
     tachoCount = 0;
     averagePulseTime_us = 0;
-
 }
 
 
 void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 {
     desiredSpeed_RPM = speed;
-    pwmOutputPin.write(static_cast<float>(speed)/Settings::Fan::MaxSpeed_RPM);
+    float pwmOut = static_cast<float>(speed)/Settings::Fan::MaxSpeed_RPM;
+    printf("PWM OUT: %f\n", pwmOut);
+    pwmOutputPin.write(pwmOut);
 }
 
 

@@ -1,6 +1,6 @@
 #pragma once 
-#include <cstdint>
 #include "mbed.h"
+#include <cstdint>
 
 /* GPIO Hardware Pins */
 // Button
@@ -63,7 +63,7 @@ namespace Settings
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
         // Minimum pwm required to start rotating the fan
-        const constexpr float minPWMOut = 0.5;
+        const constexpr float minPWMOut = 0.01000;
 
         /*  TUNING PARAMETERS */
 
