@@ -42,7 +42,14 @@
 // FAN PWM 
 #define PWM_0 D9
 
+// required for printing thread stats
 #define SerialPrint
+
+// thread priority levels
+#define ButtonHandlerPriority osPriorityRealtime
+#define LCDUIPriority osPriorityAboveNormal
+#define FanControllerPriority osPriorityNormal
+#define FlashPlayerPriority osPriorityBelowNormal
 
 namespace Settings 
 {

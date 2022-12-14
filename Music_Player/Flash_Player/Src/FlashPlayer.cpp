@@ -31,12 +31,13 @@ FlashPlayer::ThreadInputArgs FlashPlayer::args
 
 FlashPlayer::FlashPlayer(FanController& fan)
     : fan(fan)
-    , thread(osPriorityAboveNormal, 4096, nullptr, "Music Player")
+    , thread(FlashPlayerPriority, 4096, nullptr, "Music Player")
 {
 }
 
 void FlashPlayer::init()
 {
+    printf("intialising thread\n");
     thread.start(callback(this, &FlashPlayer::play));
 }
 
@@ -48,12 +49,14 @@ void FlashPlayer::deinit()
 
 void FlashPlayer::play()
 {
+    printf("Playing!\n");
     // calculate time period between frequencies
     float dt_ms = 1000.0/(tracks[args.trackNo].samplingFq);
 
     // set 50% duty cycle
     fan.setDesiredSpeed_Percentage(0.5);
 
+    // plays continuously until thread is terminated from another thread
     while (true)
     {
         // play frequencies one by one to make a song

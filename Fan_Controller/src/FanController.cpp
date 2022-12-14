@@ -8,7 +8,7 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
     : tachometerPin(tachometerPin_)
     , pwmOutputPin(pwmOutputPin_)
     // set Main Thread with normal priority and 2048 bytes stack size
-    , thread(osPriorityRealtime, 2048, nullptr, "FanController") 
+    , thread(FanControllerPriority, 2048, nullptr, "FanController") 
 {
     // set high frequency PWM for fan control
     pwmOutputPin.period_us(20000);

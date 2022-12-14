@@ -13,10 +13,10 @@ enum symbol
     play,
     rightTrack,
     leftTrackInv,
-    pause,
-    pauseInv,
     playInv,
     rightTrackInv,
+    pause,
+    pauseInv,
 };
 
 class MusicPlayerMenu : public IMenu
@@ -37,18 +37,15 @@ public:
         // check if sd card is initialised correctly
         if(SD.status == Settings::SD::SD_Init_Failed)
         {
-            lcdBase->lcd.printCentral("SD Card Init Failed!");
-            ThisThread::sleep_for(500ms);
-            lcdBase->lcd.locate(0,1);
-            lcdBase->lcd.printf("Loading Flash Music Tracks");  
-            ThisThread::sleep_for(500ms);
+            lcdBase->lcd.printCentral("SD Init Failed");
+            ThisThread::sleep_for(1000ms);
         }
 
         // print title, and music tracks
         flashPlayer.args.trackNo = 0;
         lcdBase->lcd.printCentral(MenuTitle);
         lcdBase->lcd.locate(0,1);
-        lcdBase->lcd.printf("%s", flashPlayer.tracks[0].Title);
+        lcdBase->lcd.printf("%s", flashPlayer.tracks[flashPlayer.args.trackNo].Title);
 
         // reset encoder tics to zero
         lcdBase->encoder.reset();
@@ -67,7 +64,7 @@ public:
                 // print title, and music tracks
                 lcdBase->lcd.printCentral(MenuTitle);
                 lcdBase->lcd.locate(0,1);
-                lcdBase->lcd.printf("%s", flashPlayer.tracks[0].Title);
+                lcdBase->lcd.printf("%s", flashPlayer.tracks[flashPlayer.args.trackNo].Title);
             }
 
             // check if button is pressed
@@ -98,17 +95,18 @@ private:
         lcdBase->lcd.setUDC(symbol::leftTrackInv, (char*)udc_leftTrackInv); 
         lcdBase->lcd.setUDC(symbol::play, (char*)udc_play); 
         lcdBase->lcd.setUDC(symbol::playInv, (char*)udc_playInv); 
-        // lcdBase->lcd.setUDC(symbol::pause, (char*)udc_pause); 
-        // lcdBase->lcd.setUDC(symbol::pauseInv, (char*)udc_pauseInv); 
         lcdBase->lcd.setUDC(symbol::rightTrack, (char*)udc_rightTrack); 
-        lcdBase->lcd.setUDC(symbol::rightTrack, (char*)udc_rightTrackInv); 
+        lcdBase->lcd.setUDC(symbol::rightTrackInv, (char*)udc_rightTrackInv); 
 
 
         // print music title
         lcdBase->lcd.printCentral(flashPlayer.tracks[flashPlayer.args.trackNo].Title);
-        int activeSlection = symbol::play;
-        charSelector(static_cast<symbol>(activeSlection));
-    
+        int activeSelection = symbol::play;
+        charSelector(static_cast<symbol>(activeSelection));
+
+        // start flash player thread
+        flashPlayer.play();
+        //flashPlayer.init();
 
         // while user is playing music
         while(true)
@@ -117,15 +115,15 @@ private:
             if((lcdBase->encoder.getMechanicalTics()) != 0)
             {
                 // increment or decrement through selections
-                activeSlection += lcdBase->encoder.getMechanicalTics();
+                activeSelection += lcdBase->encoder.getMechanicalTics();
                 // reset encoder tics to zero
                 lcdBase->encoder.reset();
                 // set limits for scrolling
-                if(activeSlection < symbol::leftTrackInv) activeSlection = symbol::leftTrack;
-                else if (activeSlection > symbol::rightTrack) activeSlection = rightTrack;
+                if(activeSelection > symbol::rightTrack) activeSelection = symbol::rightTrack;
+                else if (activeSelection < symbol::leftTrack) activeSelection = leftTrack;
 
                 // select option
-                charSelector(static_cast<symbol>(activeSlection));
+                charSelector(static_cast<symbol>(activeSelection));
             }
 
             // check if button is pressed
@@ -134,7 +132,8 @@ private:
             // select current selector
             if (state == Button::state::Short_Press) 
             {
-                switch (activeSlection) 
+                printf("Selecting %i\n", activeSelection);
+                switch (activeSelection) 
                 {
                     // go to previous song
                     case symbol::leftTrack:
@@ -157,12 +156,14 @@ private:
                 flashPlayer.deinit();
                 break;
             }
+            // sleep to allow other threads to run
+            ThisThread::sleep_for(50ms);
         }
     }
 
     #define leftTrackCursor 1
     #define playCursor 7
-    #define rightTrackCursor 15
+    #define rightTrackCursor 14
 
     void charSelector(symbol selection)
     {
@@ -176,7 +177,7 @@ private:
                 lcdBase->lcd.locate(rightTrackCursor,1);
                 lcdBase->lcd.putc(symbol::rightTrack);
                 break;
-            case symbol::leftTrackInv:
+            case symbol::leftTrack:
                 lcdBase->lcd.locate(leftTrackCursor,1);
                 lcdBase->lcd.putc(symbol::leftTrackInv);
                 lcdBase->lcd.locate(playCursor, 1);

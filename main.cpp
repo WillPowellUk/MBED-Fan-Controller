@@ -1,5 +1,5 @@
 #include "mbed.h"
-// #include <inttypes.h>
+#include <inttypes.h>
 
 // Settings
 #include "Settings.h"
@@ -14,6 +14,7 @@
 #include "ButtonHandler.hpp"
 #include <cstdint>
 
+#include "FlashPlayer.hpp"
 
 int main() 
 {
@@ -32,12 +33,9 @@ int main()
     // main LCDUI object that initialises child menus with LCDBaseClass
     LCDUI lcdUI(lcdBase);
 
-    // THREADS (does not include fan controller which is initiated during user input)
+    // THREADS (does not include fan controller or music player threads which are initiated during user input)
     lcdUI.init(); // configures lcd and starts main thread for UI
     button.init(); // starts main thread for button handling
-
-    // uint16_t frequency = 0;
-    // fan.setDesiredSpeed_Percentage(0.5);
 
     // main must be kept running (but not used)
     while(true) 
@@ -52,8 +50,8 @@ int main()
         // }
 
 
-        // mbed_stats_thread_t* stats = new mbed_stats_thread_t[8];
-        // int count = mbed_stats_thread_get_each(stats, 8);
+        // mbed_stats_thread_t* stats = new mbed_stats_thread_t[10];
+        // int count = mbed_stats_thread_get_each(stats, 10);
         // for (int i = 0; i < count; i++) {
         //     printf("ID: 0x%" PRIx32 "\n", stats[i].id);
         //     printf("Name: %s \n", stats[i].name);
@@ -67,6 +65,6 @@ int main()
         // delete[] stats;
 
         // printf("Running\n");
-        ThisThread::sleep_for(50ms);
+        ThisThread::sleep_for(500ms);
     }
 }
