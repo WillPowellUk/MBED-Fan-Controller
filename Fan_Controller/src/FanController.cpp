@@ -26,8 +26,22 @@ void FanController::init()
 void FanController::deinit()
 {
     // stops fan and terminates thread
-    pwmOutputPin.write(0);
+    stopFan();
     thread.terminate();
+}
+
+
+void FanController::stopFan()
+{
+    desiredSpeed_RPM = 0;
+    pwmOutputPin.write(0);
+}
+
+
+void FanController::setPWMOutFq(uint16_t frequency_Hz)
+{ 
+    uint16_t timePeriod_us = (1.0/frequency_Hz)*1e6;
+    pwmOutputPin.period_us(timePeriod_us);
 }
 
 

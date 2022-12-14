@@ -21,6 +21,14 @@ public:
     */
     void deinit();
 
+    /** Stops fan
+    */
+    void stopFan();
+
+    /** Set pwm output frequency - required for music playing
+    */
+    void setPWMOutFq(uint16_t frequency_Hz);
+
     /** Main thread to control fan speed, using PID
     */
     void MainThread();

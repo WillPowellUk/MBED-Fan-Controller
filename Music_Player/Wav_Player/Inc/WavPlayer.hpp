@@ -13,11 +13,11 @@
 namespace WAV 
 {
 
-class Reader : public SDCardDriver
+class Player : public SDCardDriver
 {
 public:
 
-    Reader();
+    Player();
 
     void play();
 

@@ -9,6 +9,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , mainMenu("Main Menu", &lcdBase, nullptr, &mainMenuChilds)
     , settingsMenu("Settings", &lcdBase, &mainMenu, &settingsMenuChilds)
     , fanControlMenu("Fan Control", &lcdBase, &mainMenu, &fanControlMenuChilds)
+    , musicMenu("Music Player", &lcdBase, &mainMenu)
     , closedLoopMenu("Closed Loop", &lcdBase, &fanControlMenu, &closedLoopMenuChilds)
     , pidMenu(ClosedLoopMethod::PID, "PID", &lcdBase, &closedLoopMenu)
     , brightnessMenu(MenuType::Brightness, "Brightness", &lcdBase, &settingsMenu)
@@ -17,7 +18,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     // set Main Thread with relatively high priority and 4096 bytes stack size
     , thread(osPriorityAboveNormal, 4096, nullptr, "LCDUI") 
 {
-    mainMenuChilds = {&fanControlMenu, &settingsMenu};
+    mainMenuChilds = {&fanControlMenu, &musicMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
     fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
     closedLoopMenuChilds = {&pidMenu};

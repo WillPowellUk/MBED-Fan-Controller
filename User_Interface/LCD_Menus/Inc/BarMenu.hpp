@@ -51,7 +51,11 @@ public:
             // check if button is pressed
             Button::state state = lcdBase->button.checkNewPresses();
             // return to previous menu (unless no parent menu i.e. Main Menu) on long press
-            if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) parentMenu->run();
+            if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) 
+            {
+                if(menu == MenuType::OpenLoop) 
+                parentMenu->run();
+            }
             
             // sleep to ensure other threads have time to run
             ThisThread::sleep_for(5ms);

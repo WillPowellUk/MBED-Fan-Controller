@@ -46,15 +46,6 @@
 
 namespace Settings 
 {
-    enum Status
-    {
-        OK,
-        SD_Init_Failed,
-        File_Does_Not_Exist,
-        Write_Failed,
-        Play_Failed
-    };
-
     namespace Fan
     {
         /* HARDWARE PARAMETERS */
@@ -115,6 +106,18 @@ namespace Settings
         const constexpr float minContrast = 0.3f;
 
         const constexpr uint64_t screenRefreshRate_us = 500e3;
+    }
+
+    namespace SD
+    {
+        enum Status
+        {
+            OK,
+            SD_Init_Failed,
+            File_Does_Not_Exist,
+            Write_Failed,
+            Play_Failed
+        };
     }
 
     namespace BuiltInButton

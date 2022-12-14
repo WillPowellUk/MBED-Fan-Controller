@@ -5,23 +5,23 @@
 *     Author: William Powell
 */
 
-#include "WAVReader.hpp"
+#include "WavPlayer.hpp"
 #include <cstdio>
 #include <stdio.h>
 #include "mbed_events.h"
 
-WAV::Reader::Reader()
+WAV::Player::Player()
     : SDCardDriver(SD_MOSI, SD_MISO, SD_SCK, SD_CS)
 {
 
 }
 
-void WAV::Reader::play()
+void WAV::Player::play()
 {
     FILE* file = fopen(activeFileName,"rb");
     if (file == NULL) 
     {
-        status = Settings::Play_Failed;
+        status = Settings::SD::Status::Play_Failed;
         return;
     }
 
@@ -45,12 +45,11 @@ void WAV::Reader::play()
     printf("Bits Per Sample: %i\n\n", header.bitsPerSample);
     #endif
 
-
     fclose(file);
 }
 
 
-void WAV::Reader::pause()
+void WAV::Player::pause()
 {
     // store the current position in the file
     // fgetpos(activeFile, &filePosition);

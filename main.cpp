@@ -13,7 +13,7 @@
 #include "QuadEncoderX4.hpp"
 #include "ButtonHandler.hpp"
 #include <cstdint>
- 
+
 
 int main() 
 {
@@ -35,10 +35,23 @@ int main()
     // THREADS (does not include fan controller which is initiated during user input)
     lcdUI.init(); // configures lcd and starts main thread for UI
     button.init(); // starts main thread for button handling
-    
+
+    // uint16_t frequency = 0;
+    // fan.setDesiredSpeed_Percentage(0.5);
+
     // main must be kept running (but not used)
     while(true) 
     {
+        // if(encoder.getMechanicalTics() > 0)
+        // {
+        //     frequency += (encoder.getMechanicalTics() * 10);
+        //     encoder.reset();
+        //     fan.setPWMOutFq(frequency);
+        //     lcd.cls();
+        //     lcd.printf("Frequency: %u", frequency);
+        // }
+
+
         // mbed_stats_thread_t* stats = new mbed_stats_thread_t[8];
         // int count = mbed_stats_thread_get_each(stats, 8);
         // for (int i = 0; i < count; i++) {
@@ -50,10 +63,10 @@ int main()
         //     printf("Stack Space: %" PRId32 "\n", stats[i].stack_space);
         //     printf("\n");
         // }
-        
+
         // delete[] stats;
 
         // printf("Running\n");
-        ThisThread::sleep_for(1000ms);
+        ThisThread::sleep_for(50ms);
     }
 }

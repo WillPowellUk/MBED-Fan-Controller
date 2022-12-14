@@ -13,7 +13,11 @@ SDCardDriver::SDCardDriver(const PinName& MOSI, const PinName& MISO, const PinNa
     : sd(MOSI, MISO, SCK, CS)
     , fs("sd", &sd)
 {
-    if (sd.init() != 0) status = Settings::Status::SD_Init_Failed;
+}
+
+void SDCardDriver::init()
+{
+    if (sd.init() != 0) status = Settings::SD::Status::SD_Init_Failed;
 }
 
 void SDCardDriver::setActiveFile(const char* path)
@@ -33,7 +37,7 @@ void SDCardDriver::readActiveFile()
     FILE* file = fopen(activeFileName, "r");
     if (file == NULL) 
     {
-        status = Settings::Status::File_Does_Not_Exist;
+        status = Settings::SD::Status::File_Does_Not_Exist;
         return;
     }
 
@@ -56,7 +60,7 @@ void SDCardDriver::writeActiveFile(const char* text)
     FILE* file = fopen(activeFileName,"w");
     if (file == NULL) 
     {
-        status = Settings::Status::Write_Failed;
+        status = Settings::SD::Status::Write_Failed;
         return;
     }
     fprintf(file, text);

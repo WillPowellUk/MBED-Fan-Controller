@@ -5,7 +5,6 @@
 *     Author: William Powell
 */
 
-
 #pragma once
 #include <mbed.h>
 #include "SDBlockDevice.h"
@@ -18,6 +17,9 @@ public:
     /** Mounts sd card and checks it can be read properly
     */
     SDCardDriver(const PinName& MOSI, const PinName& MISO, const PinName& SCK, const PinName& CS);
+
+    // initialises sd card
+    void init();
 
     /** Sets active file 
     @param path takes path to file
@@ -43,7 +45,7 @@ public:
     const char* getActiveFileName();
 
     // Current status displaying 
-    Settings::Status status = Settings::Status::OK;
+    Settings::SD::Status status = Settings::SD::Status::OK;
 
 protected:
     SDBlockDevice sd;

@@ -8,7 +8,7 @@
 #include "ParentMenu.hpp"
 #include "BarMenu.hpp"
 #include "ClosedLoopMenu.hpp"
-
+#include "MusicPlayerMenu.hpp"
 
 /* This class handles the setup of Menu subclasses and starts the UI thread*/
 class LCDUI
@@ -45,6 +45,7 @@ private:
     ParentMenu closedLoopMenu;
 
     // child menus
+    MusicPlayerMenu musicMenu;
     BarMenu brightnessMenu;
     BarMenu contrastMenu;
     BarMenu openLoopMenu;
