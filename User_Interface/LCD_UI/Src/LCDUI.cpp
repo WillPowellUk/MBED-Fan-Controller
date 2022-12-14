@@ -16,7 +16,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , contrastMenu(MenuType::Contrast, "Contrast", &lcdBase, &settingsMenu)
     , openLoopMenu(MenuType::OpenLoop, "Open Loop", &lcdBase, &fanControlMenu)
     // set Main Thread with relatively high priority and 4096 bytes stack size
-    , thread(LCDUIPriority, 4096, nullptr, "LCDUI") 
+    , thread(LCDUIPriority, 8192, nullptr, "LCDUI") 
 {
     mainMenuChilds = {&fanControlMenu, &musicMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};

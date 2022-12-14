@@ -49,7 +49,8 @@
 #define ButtonHandlerPriority osPriorityRealtime
 #define LCDUIPriority osPriorityAboveNormal
 #define FanControllerPriority osPriorityNormal
-#define FlashPlayerPriority osPriorityBelowNormal
+#define PulseStretchingPriority osPriorityRealtime
+#define FlashPlayerPriority osPriorityNormal
 
 namespace Settings 
 {
@@ -57,14 +58,19 @@ namespace Settings
     {
         /* HARDWARE PARAMETERS */
         // number of tachometer pulses per revolution of the fan
-        const constexpr uint8_t TachoPulsesPerRev = 4;
+        const constexpr uint8_t TachoPulsesPerRev = 2;
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
+        // Minimum speed of fan in RPM
+        const constexpr uint16_t MinSpeed_RPM = 150;
         // Minimum pwm required to start rotating the fan
-        const constexpr float minPWMOut = 0.01000;
+        const constexpr float minPWMOut = 0.01500;
+        // Number of pulses between pulse stretching
+        // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
+        const constexpr uint16_t pulsesPerPulseStretch = 10;
+
 
         /*  TUNING PARAMETERS */
-
         // interval time for main thread - updating fan speed and sending new PID values
         // More accurate fan speed with longer interval, however control system is slower to respond to error
         const constexpr uint16_t threadTimeInterval_ms = 100;
