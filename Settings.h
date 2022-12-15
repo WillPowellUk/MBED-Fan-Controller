@@ -90,10 +90,23 @@ namespace Settings
         
         /*  TUNING PARAMETERS */
         const constexpr uint16_t threadTimeInterval_ms = 100;
-        // PID constants
-        const constexpr float kp = 1.0;
-        const constexpr float ki = 1.0;
-        const constexpr float kd = 1.0;
+
+        // PID constants (calcuated using Ziegler–Nichols method)
+        // Ultimate Gain and Oscillation Period
+        const constexpr float ku = 0.1;
+        const constexpr float Tu = 1;
+        // P
+        const constexpr float P_kp = 0.001;//0.5 * ku;
+        // PI
+        const constexpr float PI_kp = 0.45 * ku;
+        const constexpr float PI_ki = (0.54 * ku) / Tu;
+        // PD
+        const constexpr float PD_kp = 0.8 * ku;
+        const constexpr float PD_kd = 0.1 * ku * Tu;
+        // PID
+        const constexpr float PID_kp = 0.6 * ku;
+        const constexpr float PID_ki = (1.2 * ku) / Tu;
+        const constexpr float PID_kd = 0.075 * ku * Tu;
 
     }
 

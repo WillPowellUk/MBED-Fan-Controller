@@ -28,6 +28,8 @@ public:
         // set fan speed to zero
         uint16_t desiredSpeedRPM = 0;
         lcdBase->fan.setDesiredSpeed_RPM(desiredSpeedRPM);
+        // reset encoder
+        lcdBase->encoder.reset();
 
         // initialise fan controller and pulse stretching thread
         lcdBase->fan.init();
@@ -101,7 +103,7 @@ public:
                 parentMenu->run();
             }
             // allow other tasks to run
-            ThisThread::sleep_for(5);
+            ThisThread::sleep_for(std::chrono::milliseconds(LCDUIYieldTime));
         }
     }
 

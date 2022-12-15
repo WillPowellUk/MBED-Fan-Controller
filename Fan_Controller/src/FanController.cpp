@@ -54,45 +54,24 @@ void FanController::MainThread()
 {
     while(true)
     {
-        // calculate new speed
+        // calculate latest speed measurement
         calculateCurrentSpeed();
 
-        // printf("Current Speed RPM: %u\n", currentSpeed_RPM);
+        // // error is the difference between desired speed and actual speed relative to max speed
+        // float error = (static_cast<float>(desiredSpeed_RPM) - currentSpeed_RPM) / Settings::Fan::MaxSpeed_RPM;
 
-        // // error is difference between desired speed and actual speed
-        // float error = currentSpeed_RPM - desiredSpeed_RPM;
+        // // Add correction to feedback PWM
+        // float PWMFeedback = ClosedLoopMethods::calcPID(error, ClosedLoopMethods::Method::P);
+
+        // printf("Duty Cycle: %f\n", pwmOutputPin.read());
+
+        // printf("Error: %f   PWM Feedback: %f\n", error, PWMFeedback);
         
-        // /* PWM Fan Output Calculated from PID */
-        // static uint32_t previousTime = 0;
-        // static uint32_t previousError = 0;
-        // static float integralError = 0;
+        // // Check limits and output feedback to fan
+        // if(PWMFeedback > 1.0) PWMFeedback = 1.0;
+        // else if (PWMFeedback < 0.0) PWMFeedback = 0.0;
+        // pwmOutputPin.write(PWMFeedback);
 
-        // // calculate time elapsed since last call
-        // uint64_t timeElapsed = mainTimer.elapsed_time().count();
-        // // reset ISR timer
-        // mainTimer.reset();
-        // mainTimer.start();
-
-        // // Do not calculate PID on first call since timeElapsed is undetermined
-        // static bool firstCall = true;
-        // if(!firstCall)
-        // {
-        //     firstCall = false;
-
-        //     // calculate cumaltive error
-        //     integralError += error * timeElapsed;
-
-        //     // calculate change in error
-        //     float derivativeError = (error - previousError)/timeElapsed;
-        //     previousError = error;
-
-        //     float PWM_Output = Settings::Fan::kp * (error + (Settings::Fan::ki * integralError) + (Settings::Fan::kd * derivativeError));
-
-        //     if(PWM_Output > 1.0) PWM_Output = 1.0;
-        //     else if (PWM_Output < 0.0) PWM_Output = 0.0;
-        //     pwmOutputPin.write(PWM_Output);
-        // }
-        
         ThisThread::sleep_for(FanControlYieldTime);
     }
 }
@@ -163,9 +142,6 @@ void FanController::pulseStretching()
     const uint32_t activeDelay_ms = (2 * MaxTachoPulseWidth_us) / 1e3; 
     const uint32_t inactiveDelay_ms = activeDelay_ms * Settings::Fan::PulseStretchRatio;
 
-    printf("active delay: %u", activeDelay_ms);
-    printf("Inactive delay: %u", inactiveDelay_ms);
-
     // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
     while (true)
     {
@@ -193,8 +169,14 @@ void FanController::pulseStretching()
 
 void FanController::calculateCurrentSpeed()
 {
-    // convert time between rising and falling edge of one pulse to speed in RPM 
-    uint16_t currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * 2 * averagePulseTime_us * usToS);
+    uint16_t currentSpeed_RPM_Temp;
+
+    if (Settings::Fan::PulseStretchingActive)
+        // convert time of one pulse to a speed in RPM 
+        currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * averagePulseTime_us * usToS);
+    else 
+        // convert time between rising and falling edge of one pulse to a speed in RPM 
+        currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * 2 * averagePulseTime_us * usToS);
 
     // update only if pulseStretching has been completed, update speed
     if (pulseStretchingComplete) 
@@ -214,7 +196,6 @@ void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 {
     desiredSpeed_RPM = speed;
     float pwmOut = static_cast<float>(speed)/Settings::Fan::MaxSpeed_RPM;
-    printf("PWM OUT: %f\n", pwmOut);
     pwmOutputPin.write(pwmOut);
 }
 

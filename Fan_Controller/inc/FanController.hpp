@@ -2,6 +2,7 @@
 #include "mbed.h"
 #include "Settings.h"
 #include <cstdint>
+#include "ClosedLoopMethods.hpp"
 
 #define usToS 1e-6
 
@@ -59,20 +60,21 @@ private:
     uint16_t desiredSpeed_RPM = 0; 
     uint16_t currentSpeed_RPM = 0;
 
+    // Closed loop active method that runs in main thread (PID by default)
+    ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
+
     // Tachometer pulse width extemeties (used in bandpass filter and pulse stretching)
     const uint32_t MinTachoPulseWidth_us = 60e6 / (Settings::Fan::MaxSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
     const uint32_t MaxTachoPulseWidth_us = 60e6 / (Settings::Fan::MinSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
 
     /* set PWM frequency higher than maximum tachometer frequency to ensure PWM pulse is not 
     mistaken as a tachometer reading during bandpass filtering */
-    const uint32_t PWMOutPeriod_us = (1e6/90); //MinTachoPulseWidth_us - 100; // 100 us tolerance
+    const uint32_t PWMOutPeriod_us = MinTachoPulseWidth_us - 500; // 500 us tolerance
 
     // Main thread will run concurrently with other tasks
     Thread mainThread;
     // Pulse stretching thread
     Thread pulseStretchingThread;
-    // Timer for PID calculation
-    Timer mainTimer;
 
     // Two different ISR Callback options for the tachometerPin interrupt
     /** Updates counter until a set number have been triggered and then updates current speed
