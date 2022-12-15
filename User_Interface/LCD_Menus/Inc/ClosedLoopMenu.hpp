@@ -5,28 +5,26 @@
 #include <chrono>
 #include <cstdint>
 #include <stdio.h>
+#include "ClosedLoopMethods.hpp"
 
-enum ClosedLoopMethod
-{
-    PID,
-    PI,
-    PD
-};
 
 
 class ClosedLoopMenu : public IMenu
 {
 public:
-    ClosedLoopMenu(ClosedLoopMethod method, const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu)
+    ClosedLoopMenu(ClosedLoopMethods::Method method, const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu)
         : IMenu(title, lcdBaseClass, parentMenu, nullptr)
         , method(method)
     {
     }
 
     virtual void run() override
-    {
+    {   
+        // set Closed Loop Method
+        lcdBase->fan.activeMethod = method;
+        
         // set fan speed to zero
-        uint16_t desiredSpeedRPM = 0;
+        int16_t desiredSpeedRPM = 0;
         lcdBase->fan.setDesiredSpeed_RPM(desiredSpeedRPM);
         // reset encoder
         lcdBase->encoder.reset();
@@ -108,6 +106,6 @@ public:
     }
 
 private:
-    ClosedLoopMethod method;
+    ClosedLoopMethods::Method method;
     Timer screenRefreshTimer;
 };

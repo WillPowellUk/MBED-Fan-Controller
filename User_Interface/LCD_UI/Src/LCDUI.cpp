@@ -10,7 +10,10 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , settingsMenu("Settings", &lcdBase, &mainMenu, &settingsMenuChilds)
     , fanControlMenu("Fan Control", &lcdBase, &mainMenu, &fanControlMenuChilds)
     , closedLoopMenu("Closed Loop", &lcdBase, &fanControlMenu, &closedLoopMenuChilds)
-    , pidMenu(ClosedLoopMethod::PID, "PID", &lcdBase, &closedLoopMenu)
+    , pidMenu(ClosedLoopMethods::Method::PID, "PID", &lcdBase, &closedLoopMenu)
+    , pdMenu(ClosedLoopMethods::Method::PD, "PD", &lcdBase, &closedLoopMenu)
+    , piMenu(ClosedLoopMethods::Method::PI, "PI", &lcdBase, &closedLoopMenu)
+    , pMenu(ClosedLoopMethods::Method::PID, "P", &lcdBase, &closedLoopMenu)
     , brightnessMenu(MenuType::Brightness, "Brightness", &lcdBase, &settingsMenu)
     , contrastMenu(MenuType::Contrast, "Contrast", &lcdBase, &settingsMenu)
     , openLoopMenu(MenuType::OpenLoop, "Open Loop", &lcdBase, &fanControlMenu)
@@ -18,7 +21,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     mainMenuChilds = {&fanControlMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
     fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
-    closedLoopMenuChilds = {&pidMenu};
+    closedLoopMenuChilds = {&pidMenu, &pdMenu, &piMenu, &pMenu};
 }
 
 

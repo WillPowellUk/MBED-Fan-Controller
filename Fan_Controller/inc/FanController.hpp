@@ -52,6 +52,9 @@ public:
     */
     void setPWMOutFrequency_Hz(uint16_t frequency_Hz);
 
+    // Closed loop active method that runs in main thread (PID by default)
+    ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
+
 private:
     // hardware pins
     InterruptIn tachometerPin;
@@ -60,9 +63,6 @@ private:
     // desired speed set by setDesiredSpeed
     uint16_t desiredSpeed_RPM = 0; 
     uint16_t currentSpeed_RPM = 0;
-
-    // Closed loop active method that runs in main thread (PID by default)
-    ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
 
     // Tachometer pulse width extemeties (used in bandpass filter and pulse stretching)
     const uint32_t MinTachoPulseWidth_us = 60e6 / (Settings::Fan::MaxSpeed_RPM * Settings::Fan::TachoPulsesPerRev);

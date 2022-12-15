@@ -31,7 +31,6 @@ float ClosedLoopMethods::calcPID(float error, Method method)
         switch (method) 
         {
             case Method::PID:
-                printf("Proportional: %f, integral: %f, derivative: %f\n",  Settings::Fan::PID_kp * (error), Settings::Fan::PID_kp * (Settings::Fan::PID_ki * integralError), Settings::Fan::PID_kp *(Settings::Fan::PID_kd * derivativeError));
                 PWM_Output = Settings::Fan::PID_kp * (error + (Settings::Fan::PID_ki * integralError) + (Settings::Fan::PID_kd * derivativeError));
                 break;
             case Method::PI:
@@ -44,8 +43,6 @@ float ClosedLoopMethods::calcPID(float error, Method method)
                 PWM_Output = Settings::Fan::P_kp * error;
                 break;
         }
-
-        printf("Error: %f   PWM Feedback: %f\n", error, PWM_Output);
         
         return PWM_Output;
     }

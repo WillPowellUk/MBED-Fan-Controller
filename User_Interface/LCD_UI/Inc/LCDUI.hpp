@@ -45,6 +45,9 @@ private:
     BarMenu contrastMenu;
     BarMenu openLoopMenu;
     ClosedLoopMenu pidMenu;
+    ClosedLoopMenu pdMenu;
+    ClosedLoopMenu piMenu;
+    ClosedLoopMenu pMenu;
 
     // child menus / sub menus for each parent menu      
     std::vector<IMenu*> mainMenuChilds;
