@@ -42,7 +42,22 @@
 // FAN PWM 
 #define PWM_0 D9
 
+// Required for thread stats
 #define SerialPrint
+
+// Thread Priority Levels
+#define LCDUIPriority osPriorityAboveNormal
+#define FanControllerPriority osPriorityAboveNormal
+#define ButtonHandlerPriority osPriorityRealtime
+#define PulseStretchingPriority osPriorityRealtime
+
+// Thread Yielding Times
+#define ButtonYieldTime 30ms
+// Reduce if UI experience lag
+#define LCDUIYieldTime 30ms
+// Interval time for updating fan speed and sending new PID values
+// More accurate fan speed with longer interval, however control system is slower to respond to error
+#define FanControlYieldTime 100ms 
 
 namespace Settings 
 {
@@ -59,16 +74,13 @@ namespace Settings
     {
         /* HARDWARE PARAMETERS */
         // number of tachometer pulses per revolution of the fan
-        const constexpr uint8_t TachoPulsesPerRev = 4;
+        const constexpr uint8_t TachoPulsesPerRev = 2;
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
 
         /*  TUNING PARAMETERS */
-
-        // interval time for main thread - updating fan speed and sending new PID values
-        // More accurate fan speed with longer interval, however control system is slower to respond to error
         const constexpr uint16_t threadTimeInterval_ms = 100;
         // PID constants
         const constexpr float kp = 1.0;

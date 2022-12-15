@@ -54,7 +54,9 @@ private:
     uint16_t currentSpeed_RPM = 0;
 
     // Main thread will run concurrently with other tasks
-    Thread thread;
+    Thread mainThread;
+    // Pulse stretching thread
+    Thread pulseStretchingThread;
     // Timer for PID calculation
     Timer mainTimer;
 
@@ -65,5 +67,11 @@ private:
     Timer ISRTimer;
     volatile uint32_t tachoCount = 0;
     volatile uint64_t averagePulseTime_us = 0;
+    volatile bool pulseStretchingActive = false;
+
+    /** Stretches the pulse of the duty cycle temporarily to obtain accurate tachometer reading
+    @details Ran constantly on pulseStretchingThread (blocking)
+    */
+    void pulseStretching();
 
 };

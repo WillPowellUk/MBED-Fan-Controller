@@ -8,7 +8,8 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
     : tachometerPin(tachometerPin_)
     , pwmOutputPin(pwmOutputPin_)
     // set Main Thread with normal priority and 2048 bytes stack size
-    , thread(osPriorityRealtime, 2048, nullptr, "FanController") 
+    , mainThread(FanControllerPriority, 2048, nullptr, "FanController") 
+    //, pulseStretchingThread(PulseStretchingPriority, 1024, nullptr, "PulseStretching")
 {
     // set high frequency PWM for fan control
     pwmOutputPin.period_us(20000);
@@ -20,14 +21,14 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
 void FanController::init()
 {
     // start main thread
-    thread.start(callback(this, &FanController::MainThread));
+    mainThread.start(callback(this, &FanController::MainThread));
 }
 
 void FanController::deinit()
 {
     // stops fan and terminates thread
     pwmOutputPin.write(0);
-    thread.terminate();
+    mainThread.terminate();
 }
 
 
@@ -72,7 +73,7 @@ void FanController::MainThread()
         //     pwmOutputPin.write(PWM_Output);
         // }
         
-        ThisThread::sleep_for(Settings::Fan::threadTimeInterval_ms);
+        ThisThread::sleep_for(FanControlYieldTime);
     }
 }
 
