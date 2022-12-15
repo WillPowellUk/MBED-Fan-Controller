@@ -47,9 +47,8 @@
 
 // Thread Priority Levels
 #define LCDUIPriority osPriorityAboveNormal
-#define FanControllerPriority osPriorityAboveNormal
+#define FanControllerPriority osPriorityRealtime
 #define ButtonHandlerPriority osPriorityRealtime
-#define PulseStretchingPriority osPriorityRealtime
 
 // Thread Yielding Times
 #define ButtonYieldTime 30ms
@@ -77,9 +76,14 @@ namespace Settings
         const constexpr uint8_t TachoPulsesPerRev = 2;
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
+        // Minimum speed of fan in RPM
+        const constexpr uint16_t MinSpeed_RPM = 300;
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
-
+        // Number of pulses between pulse stretching
+        // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
+        const constexpr uint16_t PulsesPerPulseStretch = 10;
+        
         /*  TUNING PARAMETERS */
         const constexpr uint16_t threadTimeInterval_ms = 100;
         // PID constants

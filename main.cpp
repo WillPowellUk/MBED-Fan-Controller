@@ -14,6 +14,12 @@
 #include "ButtonHandler.hpp"
 #include <cstdint>
  
+volatile uint64_t county = 0;
+
+void ISR()
+{
+    county++;
+}
 
 int main() 
 {
