@@ -76,7 +76,7 @@ public:
 
                 // Otherwise one mech tic corresponds to 10 RPM
                 else
-                    desiredSpeedRPM += (lcdBase->encoder.getMechanicalTics() * 10);
+                    desiredSpeedRPM += (lcdBase->encoder.getMechanicalTics() * 1000);
 
                 // reset encoder
                 lcdBase->encoder.reset();

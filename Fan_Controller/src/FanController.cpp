@@ -54,25 +54,24 @@ void FanController::MainThread()
 {
     while(true)
     {
-        // calculate latest speed measurement
+        // wait for pulse stretch to finish if necessary
+        while (pulseStretchingActive); 
+
+        // calculate latest speed measurement 
         calculateCurrentSpeed();
 
-        // // error is the difference between desired speed and actual speed relative to max speed
-        // float error = (static_cast<float>(desiredSpeed_RPM) - currentSpeed_RPM) / Settings::Fan::MaxSpeed_RPM;
+        // error is the difference between desired speed and actual speed relative to max speed
+        float error = (static_cast<float>(desiredSpeed_RPM) - currentSpeed_RPM) / Settings::Fan::MaxSpeed_RPM;
 
-        // // Add correction to feedback PWM
-        // float PWMFeedback = ClosedLoopMethods::calcPID(error, ClosedLoopMethods::Method::P);
-
-        // printf("Duty Cycle: %f\n", pwmOutputPin.read());
-
-        // printf("Error: %f   PWM Feedback: %f\n", error, PWMFeedback);
+        // Add correction to feedback PWM
+        float PWMFeedback = ClosedLoopMethods::calcPID(error, ClosedLoopMethods::Method::PID);
         
-        // // Check limits and output feedback to fan
-        // if(PWMFeedback > 1.0) PWMFeedback = 1.0;
-        // else if (PWMFeedback < 0.0) PWMFeedback = 0.0;
-        // pwmOutputPin.write(PWMFeedback);
+        // Check limits and output feedback to fan
+        if(PWMFeedback > 1.0) PWMFeedback = 1.0;
+        else if (PWMFeedback < 0.0) PWMFeedback = 0.0;
+        pwmOutputPin.write(PWMFeedback);
 
-        ThisThread::sleep_for(FanControlYieldTime);
+        ThisThread::sleep_for(mainThreadDelay);
     }
 }
 
@@ -141,6 +140,7 @@ void FanController::pulseStretching()
     // twice the time period to ensure at least one complete tachometer pulse is measured
     const uint32_t activeDelay_ms = (2 * MaxTachoPulseWidth_us) / 1e3; 
     const uint32_t inactiveDelay_ms = activeDelay_ms * Settings::Fan::PulseStretchRatio;
+    mainThreadDelay = std::chrono::milliseconds(activeDelay_ms + inactiveDelay_ms);
 
     // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
     while (true)
@@ -195,8 +195,6 @@ void FanController::calculateCurrentSpeed()
 void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 {
     desiredSpeed_RPM = speed;
-    float pwmOut = static_cast<float>(speed)/Settings::Fan::MaxSpeed_RPM;
-    pwmOutputPin.write(pwmOut);
 }
 
 

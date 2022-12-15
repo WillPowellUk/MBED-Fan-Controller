@@ -1,6 +1,7 @@
 #pragma once
 #include "mbed.h"
 #include "Settings.h"
+#include <chrono>
 #include <cstdint>
 #include "ClosedLoopMethods.hpp"
 
@@ -73,6 +74,7 @@ private:
 
     // Main thread will run concurrently with other tasks
     Thread mainThread;
+    std::chrono::milliseconds mainThreadDelay = FanControlYieldTime;
     // Pulse stretching thread
     Thread pulseStretchingThread;
 

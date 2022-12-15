@@ -93,10 +93,10 @@ namespace Settings
 
         // PID constants (calcuated using Ziegler–Nichols method)
         // Ultimate Gain and Oscillation Period
-        const constexpr float ku = 0.1;
-        const constexpr float Tu = 1;
+        const constexpr float ku = 2.0;
+        const constexpr float Tu = 4;
         // P
-        const constexpr float P_kp = 0.001;//0.5 * ku;
+        const constexpr float P_kp = 0.5 * ku;
         // PI
         const constexpr float PI_kp = 0.45 * ku;
         const constexpr float PI_ki = (0.54 * ku) / Tu;
