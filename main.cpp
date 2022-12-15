@@ -40,6 +40,6 @@ int main()
 
     // THREADS (does not include fan controller which is initiated during user input)
     button.init(); // starts button handling thread
-    lcdUI.init(); // configures lcd and starts UI on main thread
+    lcdUI.init(); // configures lcd and starts UI (on main thread)
 
 }

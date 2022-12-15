@@ -26,6 +26,7 @@ public:
     */
     void MainThread();
 
+
     /** Setter for desiredSpeed_RPM - target speed in RPM for control system
     @param speed speed in RPM
     */
@@ -45,6 +46,10 @@ public:
     */
     void calculateCurrentSpeed();
 
+    /** Set Pwm frequency of output (useful for playing music)
+    */
+    void setPWMOutFrequency_Hz(uint16_t frequency_Hz);
+
 private:
     // hardware pins
     InterruptIn tachometerPin;
@@ -58,6 +63,10 @@ private:
     const uint32_t MinTachoPulseWidth_us = 60e6 / (Settings::Fan::MaxSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
     const uint32_t MaxTachoPulseWidth_us = 60e6 / (Settings::Fan::MinSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
 
+    /* set PWM frequency higher than maximum tachometer frequency to ensure PWM pulse is not 
+    mistaken as a tachometer reading during bandpass filtering */
+    const uint32_t PWMOutPeriod_us = (1e6/90); //MinTachoPulseWidth_us - 100; // 100 us tolerance
+
     // Main thread will run concurrently with other tasks
     Thread mainThread;
     // Pulse stretching thread
@@ -65,10 +74,12 @@ private:
     // Timer for PID calculation
     Timer mainTimer;
 
-    /** ISR Callback function from tachometerPin interrupt
-    @details Updates counter until a set number have been triggered and then updates current speed
+    // Two different ISR Callback options for the tachometerPin interrupt
+    /** Updates counter until a set number have been triggered and then updates current speed
     */
-    void tachometerISR();
+    void bandpassFilterISR();
+    void pulseStretchingISR();
+
     Timer ISRTimer;
     volatile uint32_t tachoCount = 0;
     volatile uint64_t averagePulseTime_us = 0;
@@ -78,4 +89,6 @@ private:
     */
     void pulseStretching();
     volatile bool pulseStretchingActive = false;
+    volatile bool pulseStretchingComplete = false;
+
 };

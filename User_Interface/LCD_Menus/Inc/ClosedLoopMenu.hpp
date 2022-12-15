@@ -29,7 +29,7 @@ public:
         uint16_t desiredSpeedRPM = 0;
         lcdBase->fan.setDesiredSpeed_RPM(desiredSpeedRPM);
 
-        // initialise fan controller thread
+        // initialise fan controller and pulse stretching thread
         lcdBase->fan.init();
 
         // print title, desired and actual speed
@@ -66,8 +66,17 @@ public:
             // if user rotates encoder, increment or decrement fan speed
             if(lcdBase->encoder.getMechanicalTics() != 0)
             {
-                // one mech tic corresponds to 10 RPM
-                desiredSpeedRPM += (lcdBase->encoder.getMechanicalTics() * 10);
+                // first increment starts at minimum speed
+                if((desiredSpeedRPM == 0) && (lcdBase->encoder.getMechanicalTics() > 0))
+                    desiredSpeedRPM = Settings::Fan::MinSpeed_RPM;
+                else if((desiredSpeedRPM == Settings::Fan::MinSpeed_RPM) && (lcdBase->encoder.getMechanicalTics() < 0))
+                    desiredSpeedRPM = 0;
+
+                // Otherwise one mech tic corresponds to 10 RPM
+                else
+                    desiredSpeedRPM += (lcdBase->encoder.getMechanicalTics() * 10);
+
+                // reset encoder
                 lcdBase->encoder.reset();
 
                 // limit it to viable range and set
@@ -92,7 +101,7 @@ public:
                 parentMenu->run();
             }
             // allow other tasks to run
-            ThisThread::sleep_for(5ms);
+            ThisThread::sleep_for(5);
         }
     }
 

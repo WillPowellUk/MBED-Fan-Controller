@@ -12,18 +12,33 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
     , mainThread(FanControllerPriority, 2048, nullptr, "FanController") 
     , pulseStretchingThread(PulseStretchingPriority, 1024, nullptr, "PulseStretching")
 {
-    // set high frequency PWM for fan control
-    pwmOutputPin.period_us(20000);
-    // attach callback function calcFanSpeed on falling edge (pin pulled up in hardware)
-    tachometerPin.fall(callback(this, &FanController::tachometerISR));
+    /* set PWM frequency higher than maximum tachometer frequency to ensure PWM pulse is not 
+    mistaken as a tachometer reading during bandpass filtering */
+    pwmOutputPin.period_us(PWMOutPeriod_us);
+
+    // set tachometer ISR to bandpass or pulse stretching
+    if(Settings::Fan::PulseStretchingActive)
+    {
+        // attach ISR to falling edge of tacho signal
+        tachometerPin.fall(callback(this, &FanController::pulseStretchingISR));
+    }
+    else 
+    {
+        // attach ISR to both rising and falling edge of tacho signal
+        tachometerPin.rise(callback(this, &FanController::bandpassFilterISR));
+        tachometerPin.fall(callback(this, &FanController::bandpassFilterISR));
+    }
+    
 }
 
 
 void FanController::init()
 {
-    // start main thread and pulse stretching thread
+    // start main thread and pulse stretching thread (if required)
     mainThread.start(callback(this, &FanController::MainThread));
-    pulseStretchingThread.start(callback(this, &FanController::pulseStretching));
+
+    if(Settings::Fan::PulseStretchingActive)
+        pulseStretchingThread.start(callback(this, &FanController::pulseStretching));
 }
 
 
@@ -83,23 +98,50 @@ void FanController::MainThread()
 }
 
 
-void FanController::tachometerISR()
+void FanController::bandpassFilterISR()
 {
     /* In a given window, set by how often the method variables tachoCount and averagePulseTime_us 
     are reset (when calculateCurrentSpeed is called), the average time between pulses will be calculated */
     
-    /* Only read tachometer if pulse stretching is active.
-    This  ensure tachometer does not lose power and gives false reading during pwm OFF cycle*/
+    // calculate latest pulse time (between rising and falling edge)
+    uint64_t pulseTime_us = ISRTimer.elapsed_time().count();
+    
+    // reset ISR timer
+    ISRTimer.reset();
+    ISRTimer.start();
+
+    /* Bandpass Filter attenuates the tachometer frequencies that are not in range of the minimum and maximum frequencies, including PWM artifacts */
+    // Pulse width is divided by two to account for both the rising and falling edge of a single pulse
+    if((pulseTime_us > (MinTachoPulseWidth_us / 2)) && (pulseTime_us < (MaxTachoPulseWidth_us / 2)))
+    {
+        // ignore avg caluclation on first interrupt, since pulse time is unknown
+        if (tachoCount != 0)
+        {
+            // weight latest pulse time with previous average pulse times
+            averagePulseTime_us = ((averagePulseTime_us * (tachoCount-1)) + pulseTime_us) / tachoCount;
+        }
+        // increment tachometer counter
+        tachoCount++;
+    }
+}
+
+
+void FanController::pulseStretchingISR()
+{
+    /* In a given window, set by how often the method variables tachoCount and averagePulseTime_us 
+    are reset (when calculateCurrentSpeed is called), the average time between pulses will be calculated */
+    
+    // calculate latest pulse time
+    uint64_t pulseTime_us = ISRTimer.elapsed_time().count();
+    
+    // reset ISR timer
+    ISRTimer.reset();
+    ISRTimer.start();
+
+    /* Pulse stretching ensures tachometer does not lose power and give false reading during pwm OFF cycle, by outputting an ocassional 100% duty cycle pulse*/
     if (pulseStretchingActive)
     {
-        // calculate latest pulse time
-        uint64_t pulseTime_us = ISRTimer.elapsed_time().count();
-        
-        // reset ISR timer
-        ISRTimer.reset();
-        ISRTimer.start();
-
-        // ignore avg caluclation on first interrupt, since unknown pulse time
+        // ignore avg caluclation on first interrupt, since pulse time is unknown
         if (tachoCount != 0)
         {
             // weight latest pulse time with previous average pulse times
@@ -113,8 +155,6 @@ void FanController::tachometerISR()
 
 void FanController::pulseStretching()
 {
-    pwmOutputPin.write(0.3);
-
     // set to default PWM frequency
     pwmOutputPin.period_ms(20);
 
@@ -129,27 +169,40 @@ void FanController::pulseStretching()
     // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
     while (true)
     {
-        // store current duty cycle
-        float currentDutyCycle = pwmOutputPin.read();
+        // do not conduct pulse stretching if desired fan speed is zero
+        if(desiredSpeed_RPM != 0)
+        {
+            // store current duty cycle
+            float currentDutyCycle = pwmOutputPin.read();
 
-        // set duty cycle to 100% for one duty cycle and enable tachometer reading
-        pwmOutputPin.write(1.0);
-        pulseStretchingActive = true;
-        ThisThread::sleep_for(std::chrono::milliseconds(activeDelay_ms));
+            // set duty cycle to 100% for one duty cycle and enable tachometer reading
+            pwmOutputPin.write(1.0);
+            pulseStretchingActive = true;
+            ThisThread::sleep_for(std::chrono::milliseconds(activeDelay_ms));
 
-        // Go back to previous duty cycle for x pulses
-        pulseStretchingActive = false;
-        pwmOutputPin.write(currentDutyCycle);
+            // Go back to previous duty cycle for x pulses
+            pulseStretchingActive = false;
+            pwmOutputPin.write(currentDutyCycle);
+        }
+        // reset flag to mark pulse stretch as complete
+        pulseStretchingComplete = true;
         ThisThread::sleep_for(std::chrono::milliseconds(inactiveDelay_ms));
-
     }
 }
 
 
 void FanController::calculateCurrentSpeed()
 {
-    // convert to RPM
-    currentSpeed_RPM = 60 / (Settings::Fan::TachoPulsesPerRev * averagePulseTime_us * usToS);
+    // convert time between rising and falling edge of one pulse to speed in RPM 
+    uint16_t currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * 2 * averagePulseTime_us * usToS);
+
+    // update only if pulseStretching has been completed, update speed
+    if (pulseStretchingComplete) 
+    {
+        // reset flag
+        pulseStretchingComplete = false;
+        currentSpeed_RPM = currentSpeed_RPM_Temp;
+    }
 
     // reset ISR variables
     tachoCount = 0;
@@ -176,4 +229,10 @@ void FanController::setDesiredSpeed_Percentage(const float speed)
 uint16_t FanController::getCurrentSpeed_RPM() const
 {
     return currentSpeed_RPM;
+}
+
+void FanController::setPWMOutFrequency_Hz(uint16_t frequency_Hz)
+{
+    uint16_t timePeriod_us = (1.0/frequency_Hz)*1e6;
+    pwmOutputPin.period_us(timePeriod_us);
 }

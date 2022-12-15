@@ -81,6 +81,9 @@ namespace Settings
         const constexpr uint16_t MinSpeed_RPM = 300;
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
+
+        // Toggle for pulse stretching mode. If false, bandpass filtering is active
+        const constexpr bool PulseStretchingActive = true;
         // Ratio between active and non-active pulse stretching time
         // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
         const constexpr uint16_t PulseStretchRatio = 10;
