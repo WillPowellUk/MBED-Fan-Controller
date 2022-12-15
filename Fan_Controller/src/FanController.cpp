@@ -1,5 +1,6 @@
 #include "FanController.hpp"
 #include "Settings.h"
+#include <chrono>
 #include <cstdint>
 #include <stdint.h>
 #include "Utilities.hpp"
@@ -9,7 +10,7 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
     , pwmOutputPin(pwmOutputPin_)
     // set Main Thread with normal priority and 2048 bytes stack size
     , mainThread(FanControllerPriority, 2048, nullptr, "FanController") 
-    //, pulseStretchingThread(PulseStretchingPriority, 1024, nullptr, "PulseStretching")
+    , pulseStretchingThread(PulseStretchingPriority, 1024, nullptr, "PulseStretching")
 {
     // set high frequency PWM for fan control
     pwmOutputPin.period_us(20000);
@@ -20,9 +21,11 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
 
 void FanController::init()
 {
-    // start main thread
+    // start main thread and pulse stretching thread
     mainThread.start(callback(this, &FanController::MainThread));
+    pulseStretchingThread.start(callback(this, &FanController::pulseStretching));
 }
+
 
 void FanController::deinit()
 {
@@ -38,6 +41,8 @@ void FanController::MainThread()
     {
         // calculate new speed
         calculateCurrentSpeed();
+
+        // printf("Current Speed RPM: %u\n", currentSpeed_RPM);
 
         // // error is difference between desired speed and actual speed
         // float error = currentSpeed_RPM - desiredSpeed_RPM;
@@ -82,22 +87,62 @@ void FanController::tachometerISR()
 {
     /* In a given window, set by how often the method variables tachoCount and averagePulseTime_us 
     are reset (when calculateCurrentSpeed is called), the average time between pulses will be calculated */
-
-    // calculate latest pulse time
-    uint64_t pulseTime_us = ISRTimer.elapsed_time().count();
     
-    // reset ISR timer
-    ISRTimer.reset();
-    ISRTimer.start();
-
-    // ignore avg caluclation on first interrupt, since unknown pulse time
-    if (tachoCount != 0)
+    /* Only read tachometer if pulse stretching is active.
+    This  ensure tachometer does not lose power and gives false reading during pwm OFF cycle*/
+    if (pulseStretchingActive)
     {
-        // weight latest pulse time with previous average pulse times
-        averagePulseTime_us = ((averagePulseTime_us * (tachoCount-1)) + pulseTime_us) / tachoCount;
+        // calculate latest pulse time
+        uint64_t pulseTime_us = ISRTimer.elapsed_time().count();
+        
+        // reset ISR timer
+        ISRTimer.reset();
+        ISRTimer.start();
+
+        // ignore avg caluclation on first interrupt, since unknown pulse time
+        if (tachoCount != 0)
+        {
+            // weight latest pulse time with previous average pulse times
+            averagePulseTime_us = ((averagePulseTime_us * (tachoCount-1)) + pulseTime_us) / tachoCount;
+        }
+        // increment tachometer counter
+        tachoCount++;
     }
-    // increment tachometer counter
-    tachoCount++;
+}
+
+
+void FanController::pulseStretching()
+{
+    pwmOutputPin.write(0.3);
+
+    // set to default PWM frequency
+    pwmOutputPin.period_ms(20);
+
+    // calculate delays in advance to save computational time
+    // twice the time period to ensure at least one complete tachometer pulse is measured
+    const uint32_t activeDelay_ms = (2 * MaxTachoPulseWidth_us) / 1e3; 
+    const uint32_t inactiveDelay_ms = activeDelay_ms * Settings::Fan::PulseStretchRatio;
+
+    printf("active delay: %u", activeDelay_ms);
+    printf("Inactive delay: %u", inactiveDelay_ms);
+
+    // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
+    while (true)
+    {
+        // store current duty cycle
+        float currentDutyCycle = pwmOutputPin.read();
+
+        // set duty cycle to 100% for one duty cycle and enable tachometer reading
+        pwmOutputPin.write(1.0);
+        pulseStretchingActive = true;
+        ThisThread::sleep_for(std::chrono::milliseconds(activeDelay_ms));
+
+        // Go back to previous duty cycle for x pulses
+        pulseStretchingActive = false;
+        pwmOutputPin.write(currentDutyCycle);
+        ThisThread::sleep_for(std::chrono::milliseconds(inactiveDelay_ms));
+
+    }
 }
 
 

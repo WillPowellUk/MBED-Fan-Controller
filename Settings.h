@@ -46,9 +46,10 @@
 #define SerialPrint
 
 // Thread Priority Levels
-#define LCDUIPriority osPriorityAboveNormal
-#define FanControllerPriority osPriorityRealtime
+#define LCDUIPriority osPriorityNormal
+#define FanControllerPriority osPriorityNormal
 #define ButtonHandlerPriority osPriorityRealtime
+#define PulseStretchingPriority osPriorityAboveNormal
 
 // Thread Yielding Times
 #define ButtonYieldTime 30ms
@@ -56,7 +57,7 @@
 #define LCDUIYieldTime 30ms
 // Interval time for updating fan speed and sending new PID values
 // More accurate fan speed with longer interval, however control system is slower to respond to error
-#define FanControlYieldTime 100ms 
+#define FanControlYieldTime 500ms 
 
 namespace Settings 
 {
@@ -80,9 +81,9 @@ namespace Settings
         const constexpr uint16_t MinSpeed_RPM = 300;
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
-        // Number of pulses between pulse stretching
+        // Ratio between active and non-active pulse stretching time
         // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
-        const constexpr uint16_t PulsesPerPulseStretch = 10;
+        const constexpr uint16_t PulseStretchRatio = 10;
         
         /*  TUNING PARAMETERS */
         const constexpr uint16_t threadTimeInterval_ms = 100;

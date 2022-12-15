@@ -1,5 +1,6 @@
 #pragma once
 #include "mbed.h"
+#include "Settings.h"
 #include <cstdint>
 
 #define usToS 1e-6
@@ -53,6 +54,10 @@ private:
     uint16_t desiredSpeed_RPM = 0; 
     uint16_t currentSpeed_RPM = 0;
 
+    // Tachometer pulse width extemeties (used in bandpass filter and pulse stretching)
+    const uint32_t MinTachoPulseWidth_us = 60e6 / (Settings::Fan::MaxSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
+    const uint32_t MaxTachoPulseWidth_us = 60e6 / (Settings::Fan::MinSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
+
     // Main thread will run concurrently with other tasks
     Thread mainThread;
     // Pulse stretching thread
@@ -67,11 +72,10 @@ private:
     Timer ISRTimer;
     volatile uint32_t tachoCount = 0;
     volatile uint64_t averagePulseTime_us = 0;
-    volatile bool pulseStretchingActive = false;
 
     /** Stretches the pulse of the duty cycle temporarily to obtain accurate tachometer reading
     @details Ran constantly on pulseStretchingThread (blocking)
     */
     void pulseStretching();
-
+    volatile bool pulseStretchingActive = false;
 };

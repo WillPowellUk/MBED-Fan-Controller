@@ -20,10 +20,6 @@ public:
     */
     void init();
 
-    /** Main thread displaying current menu
-    */
-    void MainThread();
-
     void setBrightnessMenu();
     void setContrastMenu();
 
