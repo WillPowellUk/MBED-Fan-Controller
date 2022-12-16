@@ -13,13 +13,7 @@
 #include "QuadEncoderX4.hpp"
 #include "ButtonHandler.hpp"
 #include <cstdint>
- 
-volatile uint64_t county = 0;
 
-void ISR()
-{
-    county++;
-}
 
 int main() 
 {
@@ -41,5 +35,4 @@ int main()
     // THREADS (does not include fan controller which is initiated during user input)
     button.init(); // starts button handling thread
     lcdUI.init(); // configures lcd and starts UI (on main thread)
-
 }

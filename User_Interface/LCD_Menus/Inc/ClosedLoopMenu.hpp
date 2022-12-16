@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include "ClosedLoopMethods.hpp"
 
-
-
 class ClosedLoopMenu : public IMenu
 {
 public:
@@ -29,8 +27,9 @@ public:
         // reset encoder
         lcdBase->encoder.reset();
 
-        // initialise fan controller and pulse stretching thread
-        lcdBase->fan.init();
+        // set closed loop flag
+        lcdBase->fan.closedLoopEvent.clear();
+        lcdBase->fan.closedLoopEvent.set(ClosedLoopFlag);
 
         // print title, desired and actual speed
         lcdBase->lcd.printCentral(MenuTitle);
@@ -96,8 +95,9 @@ public:
             // return to previous menu (unless no parent menu i.e. Main Menu) on long press
             if((state == Button::state::Long_Press) && (parentMenu!= nullptr))
             {
-                // stop fan and kill thread before exiting menu
-                lcdBase->fan.deinit();
+                // set back to open loop flag
+                lcdBase->fan.closedLoopEvent.clear();
+                lcdBase->fan.closedLoopEvent.set(OpenLoopFlag);
                 parentMenu->run();
             }
             // allow other tasks to run

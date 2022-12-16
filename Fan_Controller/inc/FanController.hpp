@@ -55,6 +55,10 @@ public:
     // Closed loop active method that runs in main thread (PID by default)
     ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
 
+    // Thread flags
+    EventFlags pulseStretchingActive;
+    EventFlags closedLoopEvent;
+
 private:
     // hardware pins
     InterruptIn tachometerPin;
@@ -74,7 +78,6 @@ private:
 
     // Main thread will run concurrently with other tasks
     Thread mainThread;
-    std::chrono::milliseconds mainThreadDelay = FanControlYieldTime;
     // Pulse stretching thread
     Thread pulseStretchingThread;
 
@@ -92,7 +95,5 @@ private:
     @details Ran constantly on pulseStretchingThread (blocking)
     */
     void pulseStretching();
-    volatile bool pulseStretchingActive = false;
-    volatile bool pulseStretchingComplete = false;
 
 };

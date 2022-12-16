@@ -28,51 +28,87 @@ FanController::FanController(const PinName& tachometerPin_, const PinName& pwmOu
         tachometerPin.rise(callback(this, &FanController::bandpassFilterISR));
         tachometerPin.fall(callback(this, &FanController::bandpassFilterISR));
     }
+
+    // start main thread and pulse stretching thread (if required)
+    mainThread.start(callback(this, &FanController::MainThread));
+    //if(Settings::Fan::PulseStretchingActive)
+      //  pulseStretchingThread.start(callback(this, &FanController::pulseStretching));
     
 }
 
 
 void FanController::init()
 {
-    // start main thread and pulse stretching thread (if required)
-    mainThread.start(callback(this, &FanController::MainThread));
-
-    if(Settings::Fan::PulseStretchingActive)
-        pulseStretchingThread.start(callback(this, &FanController::pulseStretching));
 }
 
 
 void FanController::deinit()
 {
     // stops fan and terminates thread
-    pwmOutputPin.write(0);
-    mainThread.terminate();
+    setDesiredSpeed_Percentage(0);
+    // mainThread.terminate();
 }
 
 
 void FanController::MainThread()
 {
+    // calculate delays in advance to save computational time
+    // twice the time period to ensure at least one complete tachometer pulse is measured
+    const uint32_t activeDelay_ms = (2 * MaxTachoPulseWidth_us) / 1e3; 
+    const uint32_t inactiveDelay_ms = activeDelay_ms * Settings::Fan::PulseStretchRatio;
+
     while(true)
     {
-        // wait for pulse stretch to finish if necessary
-        while (pulseStretchingActive); 
+        uint32_t flag = 0;
+        // check event flag
+        flag = closedLoopEvent.wait_any((ClosedLoopFlag | OpenLoopFlag), 0, false);
 
-        // calculate latest speed measurement 
-        calculateCurrentSpeed();
+        // if in closed loop mode perform pulse stretching
+        if(flag == ClosedLoopFlag)
+        {
+            // set to default PWM frequency
+            pwmOutputPin.period_ms(20);
 
-        // error is the difference between desired speed and actual speed relative to max speed
-        float error = (static_cast<float>(desiredSpeed_RPM) - currentSpeed_RPM) / Settings::Fan::MaxSpeed_RPM;
+            // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
+            // do not conduct pulse stretching if desired fan speed is zero
+            if(desiredSpeed_RPM != 0)
+            {
+                // store current duty cycle
+                float currentDutyCycle = pwmOutputPin.read();
 
-        // Add correction to feedback PWM
-        float PWMFeedback = ClosedLoopMethods::calcPID(error, ClosedLoopMethods::Method::PID);
-        
-        // Check limits and output feedback to fan
-        if(PWMFeedback > 1.0) PWMFeedback = 1.0;
-        else if (PWMFeedback < 0.0) PWMFeedback = 0.0;
-        pwmOutputPin.write(PWMFeedback);
+                // set duty cycle to 100% for one duty cycle and enable tachometer reading
+                pwmOutputPin.write(1.0);
+                pulseStretchingActive.clear();
+                pulseStretchingActive.set(PulseStretchingActiveFlag);
+                ThisThread::sleep_for(std::chrono::milliseconds(activeDelay_ms));
 
-        ThisThread::sleep_for(mainThreadDelay);
-    }
+                // Go back to previous duty cycle for x pulses
+                pulseStretchingActive.clear();
+                pulseStretchingActive.set(PulseStretchingInactiveFlag);
+                pwmOutputPin.write(currentDutyCycle);
+            }
+
+            ThisThread::sleep_for(std::chrono::milliseconds(inactiveDelay_ms));
+
+            // calculate latest speed measurement 
+            calculateCurrentSpeed();
+
+            // error is the difference between desired speed and actual speed relative to max speed
+            float error = (static_cast<float>(desiredSpeed_RPM) - currentSpeed_RPM) / Settings::Fan::MaxSpeed_RPM;
+
+            // Add correction to feedback PWM
+            float PWMFeedback = ClosedLoopMethods::calcPID(error, ClosedLoopMethods::Method::PID);
+            
+            // Check limits and output feedback to fan
+            if(PWMFeedback > 1.0) PWMFeedback = 1.0;
+            else if (PWMFeedback < 0.0) PWMFeedback = 0.0;
+            pwmOutputPin.write(PWMFeedback);
+        }
+        else 
+        {
+            ThisThread::sleep_for(100ms);
+        }
+    }        
 }
 
 
@@ -116,75 +152,32 @@ void FanController::pulseStretchingISR()
     ISRTimer.reset();
     ISRTimer.start();
 
-    /* Pulse stretching ensures tachometer does not lose power and give false reading during pwm OFF cycle, by outputting an ocassional 100% duty cycle pulse*/
-    if (pulseStretchingActive)
+    /* Pulse stretching ensures tachometer does not lose power and give false reading during pwm OFF cycle, 
+    by outputting an ocassional 100% duty cycle pulse*/
+    // Only take measurement if pulse stretching is active
+    uint32_t flag = pulseStretchingActive.wait_any((PulseStretchingActiveFlag | PulseStretchingInactiveFlag), 0, false);
+    if (flag != PulseStretchingActiveFlag) return;
+
+    // ignore avg caluclation on first interrupt, since pulse time is unknown
+    if (tachoCount != 0)
     {
-        // ignore avg caluclation on first interrupt, since pulse time is unknown
-        if (tachoCount != 0)
-        {
-            // weight latest pulse time with previous average pulse times
-            averagePulseTime_us = ((averagePulseTime_us * (tachoCount-1)) + pulseTime_us) / tachoCount;
-        }
-        // increment tachometer counter
-        tachoCount++;
+        // weight latest pulse time with previous average pulse times
+        averagePulseTime_us = ((averagePulseTime_us * (tachoCount-1)) + pulseTime_us) / tachoCount;
     }
-}
-
-
-void FanController::pulseStretching()
-{
-    // set to default PWM frequency
-    pwmOutputPin.period_ms(20);
-
-    // calculate delays in advance to save computational time
-    // twice the time period to ensure at least one complete tachometer pulse is measured
-    const uint32_t activeDelay_ms = (2 * MaxTachoPulseWidth_us) / 1e3; 
-    const uint32_t inactiveDelay_ms = activeDelay_ms * Settings::Fan::PulseStretchRatio;
-    mainThreadDelay = std::chrono::milliseconds(activeDelay_ms + inactiveDelay_ms);
-
-    // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
-    while (true)
-    {
-        // do not conduct pulse stretching if desired fan speed is zero
-        if(desiredSpeed_RPM != 0)
-        {
-            // store current duty cycle
-            float currentDutyCycle = pwmOutputPin.read();
-
-            // set duty cycle to 100% for one duty cycle and enable tachometer reading
-            pwmOutputPin.write(1.0);
-            pulseStretchingActive = true;
-            ThisThread::sleep_for(std::chrono::milliseconds(activeDelay_ms));
-
-            // Go back to previous duty cycle for x pulses
-            pulseStretchingActive = false;
-            pwmOutputPin.write(currentDutyCycle);
-        }
-        // reset flag to mark pulse stretch as complete
-        pulseStretchingComplete = true;
-        ThisThread::sleep_for(std::chrono::milliseconds(inactiveDelay_ms));
-    }
+    // increment tachometer counter
+    tachoCount++;
+    
 }
 
 
 void FanController::calculateCurrentSpeed()
 {
-    uint16_t currentSpeed_RPM_Temp;
-
     if (Settings::Fan::PulseStretchingActive)
         // convert time of one pulse to a speed in RPM 
-        currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * averagePulseTime_us * usToS);
+        currentSpeed_RPM = 60 / (Settings::Fan::TachoPulsesPerRev * averagePulseTime_us * usToS);
     else 
         // convert time between rising and falling edge of one pulse to a speed in RPM 
-        currentSpeed_RPM_Temp = 60 / (Settings::Fan::TachoPulsesPerRev * 2 * averagePulseTime_us * usToS);
-
-    // update only if pulseStretching has been completed, update speed
-    if (pulseStretchingComplete) 
-    {
-        // reset flag
-        pulseStretchingComplete = false;
-        currentSpeed_RPM = currentSpeed_RPM_Temp;
-    }
+        currentSpeed_RPM = 60 / (Settings::Fan::TachoPulsesPerRev * 2 * averagePulseTime_us * usToS);
 
     // reset ISR variables
     tachoCount = 0;
@@ -200,8 +193,6 @@ void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 
 void FanController::setDesiredSpeed_Percentage(const float speed)
 {
-    // open loop so pulse stretching is not needed
-    pulseStretchingThread.terminate();
     desiredSpeed_RPM = speed * Settings::Fan::MaxSpeed_RPM;
     pwmOutputPin.write(Utilities::map(speed, 0.0, 1.0, Settings::Fan::minPWMOut, 1.0));
 }
@@ -211,6 +202,7 @@ uint16_t FanController::getCurrentSpeed_RPM() const
 {
     return currentSpeed_RPM;
 }
+
 
 void FanController::setPWMOutFrequency_Hz(uint16_t frequency_Hz)
 {

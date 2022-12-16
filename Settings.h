@@ -57,7 +57,13 @@
 #define LCDUIYieldTime 30ms
 // Interval time for updating fan speed and sending new PID values
 // More accurate fan speed with longer interval, however control system is slower to respond to error
-#define FanControlYieldTime 500ms 
+#define FanControlYieldTime 100ms 
+// Thread Flags
+#define PulseStretchingActiveFlag (1UL << 1)
+#define PulseStretchingInactiveFlag (1UL << 2)
+#define OpenLoopFlag (1UL << 3)
+#define ClosedLoopFlag (1UL << 4)
+
 
 namespace Settings 
 {
