@@ -24,7 +24,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     mainMenuChilds = {&fanControlMenu, &dinoGameMenu, &settingsMenu}; //  &musicMenu
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
     fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
-    closedLoopMenuChilds = {&pidMenu, &pdMenu, &piMenu, &pMenu};
+    closedLoopMenuChilds = {&pidMenu}; //, &pdMenu, &piMenu, &pMenu};
 }
 
 

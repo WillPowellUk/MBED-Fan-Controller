@@ -13,6 +13,6 @@ Since most of my projects are kept under the hood in private repositories, I tho
 * Music Player using coil whine and the SD card
 
 ## The nerdy stuff
-* Using Mbed's RTOS for multithreading (tasks), queues etc.
+* Using Mbed's RTOS for multithreading (tasks), queues, events, mutexes...
 * Interface classes used to detach dependencies on drivers
 

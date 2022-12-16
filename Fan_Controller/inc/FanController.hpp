@@ -42,22 +42,29 @@ public:
     /** Getter for currentSpeed_RPM
     @return current speed of fan in RPM
     */
-    uint16_t getCurrentSpeed_RPM() const;
+    uint16_t getCurrentSpeed_RPM();
 
         /** Calculates current speed in RPM based on tachometer's ISR
     */
     void calculateCurrentSpeed();
 
+    /** Setter for active closed loop method
+    */
+    void setActiveMethod(ClosedLoopMethods::Method method);
+
     /** Set Pwm frequency of output (useful for playing music)
     */
     void setPWMOutFrequency_Hz(uint16_t frequency_Hz);
 
-    // Closed loop active method that runs in main thread (PID by default)
-    ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
 
     // Thread flags
-    EventFlags pulseStretchingActive;
+    EventFlags pulseStretchingEvent;
     EventFlags closedLoopEvent;
+
+    // Thread mutexes
+    Mutex desiredSpeedMutex;
+    Mutex currentSpeedMutex;
+    Mutex activeMethodMutex;
 
 private:
     // hardware pins
@@ -67,6 +74,9 @@ private:
     // desired speed set by setDesiredSpeed
     uint16_t desiredSpeed_RPM = 0; 
     uint16_t currentSpeed_RPM = 0;
+
+    // Closed loop active method that runs in main thread (PID by default)
+    ClosedLoopMethods::Method activeMethod = ClosedLoopMethods::Method::PID;
 
     // Tachometer pulse width extemeties (used in bandpass filter and pulse stretching)
     const uint32_t MinTachoPulseWidth_us = 60e6 / (Settings::Fan::MaxSpeed_RPM * Settings::Fan::TachoPulsesPerRev);
@@ -78,22 +88,12 @@ private:
 
     // Main thread will run concurrently with other tasks
     Thread mainThread;
-    // Pulse stretching thread
-    Thread pulseStretchingThread;
-
+    
     // Two different ISR Callback options for the tachometerPin interrupt
-    /** Updates counter until a set number have been triggered and then updates current speed
-    */
-    void bandpassFilterISR();
-    void pulseStretchingISR();
+    void tachometerISR();
 
     Timer ISRTimer;
     volatile uint32_t tachoCount = 0;
     volatile uint64_t averagePulseTime_us = 0;
-
-    /** Stretches the pulse of the duty cycle temporarily to obtain accurate tachometer reading
-    @details Ran constantly on pulseStretchingThread (blocking)
-    */
-    void pulseStretching();
 
 };

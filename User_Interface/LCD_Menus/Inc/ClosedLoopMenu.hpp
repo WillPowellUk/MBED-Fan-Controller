@@ -19,7 +19,7 @@ public:
     virtual void run() override
     {   
         // set Closed Loop Method
-        lcdBase->fan.activeMethod = method;
+        lcdBase->fan.setActiveMethod(method);
         
         // set fan speed to zero
         int16_t desiredSpeedRPM = 0;
@@ -34,7 +34,7 @@ public:
         // print title, desired and actual speed
         lcdBase->lcd.printCentral(MenuTitle);
         lcdBase->lcd.locate(0,1);
-        lcdBase->lcd.printf("%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
+        lcdBase->lcd.printf("%uRPM", 0);
 
         char actualSpeedStr[7];
         std::sprintf(actualSpeedStr, "%uRPM", desiredSpeedRPM);
@@ -59,7 +59,6 @@ public:
                 lcdBase->lcd.printf("%uRPM", desiredSpeedRPM);
                 std::sprintf(actualSpeedStr, "%uRPM", lcdBase->fan.getCurrentSpeed_RPM());
                 lcdBase->lcd.printRight(actualSpeedStr, 1);
-
             }
 
             // if user rotates encoder, increment or decrement fan speed
@@ -83,6 +82,9 @@ public:
                 else if (desiredSpeedRPM < 0) desiredSpeedRPM = 0;
                 lcdBase->fan.setDesiredSpeed_RPM(desiredSpeedRPM);
 
+                // yield to other thread if necessary
+                ThisThread::yield();
+
                 // print title, desired and actual speed
                 lcdBase->lcd.printCentral(MenuTitle);
                 lcdBase->lcd.locate(0,1);
@@ -98,6 +100,7 @@ public:
                 // set back to open loop flag
                 lcdBase->fan.closedLoopEvent.clear();
                 lcdBase->fan.closedLoopEvent.set(OpenLoopFlag);
+                lcdBase->fan.setDesiredSpeed_RPM(0);
                 parentMenu->run();
             }
             // allow other tasks to run

@@ -52,7 +52,7 @@ public:
             else if((state == Button::state::Long_Press) && (parentMenu!= nullptr))  parentMenu->run();
 
             // sleep to ensure other threads have time to run
-            ThisThread::sleep_for(10ms);
+            ThisThread::sleep_for(LCDUIYieldTime);
         }
     }
 };

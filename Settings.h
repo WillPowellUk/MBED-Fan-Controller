@@ -49,7 +49,6 @@
 #define LCDUIPriority osPriorityNormal
 #define FanControllerPriority osPriorityNormal
 #define ButtonHandlerPriority osPriorityRealtime
-#define PulseStretchingPriority osPriorityAboveNormal
 
 // Thread Yielding Times
 #define ButtonYieldTime 30ms
@@ -79,11 +78,9 @@ namespace Settings
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
 
-        // Toggle for pulse stretching mode. If false, bandpass filtering is active
-        const constexpr bool PulseStretchingActive = true;
         // Ratio between active and non-active pulse stretching time
         // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
-        const constexpr uint16_t PulseStretchRatio = 10;
+        const constexpr uint16_t PulseStretchRatio = 5;
         
         /*  TUNING PARAMETERS */
         const constexpr uint16_t threadTimeInterval_ms = 100;
