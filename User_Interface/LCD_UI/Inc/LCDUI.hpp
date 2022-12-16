@@ -1,3 +1,12 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #pragma once
 #include "mbed.h"
 #include <cstdint>
@@ -43,9 +52,8 @@ private:
     ParentMenu closedLoopMenu;
 
     // child menus
-    // MusicPlayerMenu musicMenu;
+    MusicPlayerMenu musicMenu;
     DinoGameMenu dinoGameMenu;
-
     BarMenu brightnessMenu;
     BarMenu contrastMenu;
     BarMenu gameDifficultyMenu;

@@ -1,3 +1,11 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
 #include "LCDUI.hpp"
 #include "Settings.h"
 #include <cstdint>
@@ -10,7 +18,7 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , settingsMenu("Settings", &lcdBase, &mainMenu, &settingsMenuChilds)
     , fanControlMenu("Fan Control", &lcdBase, &mainMenu, &fanControlMenuChilds)
     , dinoGameMenu("Dino Game", &lcdBase, &mainMenu)
-    // , musicMenu("Music Player", &lcdBase, &mainMenu)
+    , musicMenu("Music Player", &lcdBase, &mainMenu)
     , closedLoopMenu("Closed Loop", &lcdBase, &fanControlMenu, &closedLoopMenuChilds)
     , pidMenu(ClosedLoopMethods::Method::PID, "PID", &lcdBase, &closedLoopMenu)
     , pdMenu(ClosedLoopMethods::Method::PD, "PD", &lcdBase, &closedLoopMenu)
@@ -21,10 +29,10 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , gameDifficultyMenu(MenuType::Difficulty, "Game Difficulty", &lcdBase, &settingsMenu, &dinoGameMenu.updateTime_ms)
     , openLoopMenu(MenuType::OpenLoop, "Open Loop", &lcdBase, &fanControlMenu)
 {
-    mainMenuChilds = {&fanControlMenu, &dinoGameMenu, &settingsMenu}; //  &musicMenu
+    mainMenuChilds = {&fanControlMenu, &musicMenu, &dinoGameMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
     fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
-    closedLoopMenuChilds = {&pidMenu}; //, &pdMenu, &piMenu, &pMenu};
+    closedLoopMenuChilds = {&pidMenu}; // &pdMenu, &piMenu, &pMenu};
 }
 
 

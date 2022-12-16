@@ -74,7 +74,7 @@ namespace Settings
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
         // Minimum speed of fan in RPM
-        const constexpr uint16_t MinSpeed_RPM = 300;
+        const constexpr uint16_t MinSpeed_RPM = 400;
         // Minimum pwm required to start rotating the fan
         const constexpr float minPWMOut = 0.01000;
 

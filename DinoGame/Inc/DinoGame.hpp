@@ -1,3 +1,11 @@
+/*  Author: CMULAY
+    https://github.com/cmulay/Arduino-UNO-Dinosaur-Game
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #pragma once
 #include "mbed.h"
 #include "ILCDDriver.hpp"

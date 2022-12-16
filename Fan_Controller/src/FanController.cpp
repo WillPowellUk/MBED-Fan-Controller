@@ -1,3 +1,12 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #include "FanController.hpp"
 #include "Settings.h"
 #include <chrono>
@@ -33,15 +42,14 @@ void FanController::MainThread()
 
     while(true)
     {
-        // // set to default PWM frequency
-        // pwmOutputPin.period_ms(20);
-
         // check event flag
         uint32_t flag = closedLoopEvent.wait_any((ClosedLoopFlag | OpenLoopFlag), 0, false);
 
         // if in closed loop mode perform pulse stretching
         if(flag == ClosedLoopFlag)
         {
+            // set to default PWM frequency
+            pwmOutputPin.period_ms(20);
 
             // every x tachometer pulses, determined by PulsesPerPulseStretch, set duty cycle to 100% for one tachometer pulse width
             // do not conduct pulse stretching if desired fan speed is zero
@@ -174,5 +182,6 @@ uint16_t FanController::getCurrentSpeed_RPM()
 void FanController::setPWMOutFrequency_Hz(uint16_t frequency_Hz)
 {
     uint16_t timePeriod_us = (1.0/frequency_Hz)*1e6;
-    pwmOutputPin.period_us(timePeriod_us);
+    if ((timePeriod_us > 50) && (timePeriod_us < 2e5))
+        pwmOutputPin.period_us(timePeriod_us);
 }
