@@ -43,7 +43,7 @@ float ClosedLoopMethods::calcPID(float error, Method method)
                 PWM_Output = Settings::Fan::P_kp * error;
                 break;
         }
-        
+
         return PWM_Output;
     }
     else 

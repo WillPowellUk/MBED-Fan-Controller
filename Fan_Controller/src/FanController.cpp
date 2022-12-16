@@ -200,6 +200,8 @@ void FanController::setDesiredSpeed_RPM(const uint16_t speed)
 
 void FanController::setDesiredSpeed_Percentage(const float speed)
 {
+    // open loop so pulse stretching is not needed
+    pulseStretchingThread.terminate();
     desiredSpeed_RPM = speed * Settings::Fan::MaxSpeed_RPM;
     pwmOutputPin.write(Utilities::map(speed, 0.0, 1.0, Settings::Fan::minPWMOut, 1.0));
 }

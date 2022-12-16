@@ -19,6 +19,10 @@ public:
     */
     SDCardDriver(const PinName& MOSI, const PinName& MISO, const PinName& SCK, const PinName& CS);
 
+    /** Initialises SD card and 
+    */
+    void init();
+
     /** Sets active file 
     @param path takes path to file
     */
@@ -43,7 +47,7 @@ public:
     const char* getActiveFileName();
 
     // Current status displaying 
-    Settings::Status status = Settings::Status::OK;
+    Settings::SD::Status status = Settings::SD::Status::OK;
 
 protected:
     SDBlockDevice sd;

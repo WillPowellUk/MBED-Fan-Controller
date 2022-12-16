@@ -119,6 +119,107 @@ const char udc_four_fifths_full[] =
     0b11110
 };
 
+
+const char udc_play[] = 
+{
+  0b00000,
+  0b01000,
+  0b01100,
+  0b01110,
+  0b01110,
+  0b01100,
+  0b01000,
+  0b00000
+};
+
+
+const char udc_playInv[] = 
+{
+  0b11111,
+  0b10111,
+  0b10011,
+  0b10001,
+  0b10001,
+  0b10011,
+  0b10111,
+  0b11111
+};
+
+
+const char udc_leftTrack[] = 
+{
+  0b10001,
+  0b10011,
+  0b10111,
+  0b11111,
+  0b11111,
+  0b10111,
+  0b10011,
+  0b10001 
+};
+
+const char udc_leftTrackInv[] = 
+{
+  0b01110,
+  0b01100,
+  0b01000,
+  0b00000,
+  0b00000,
+  0b01000,
+  0b01100,
+  0b01110
+};
+
+const char udc_rightTrack[] = 
+{
+  0b10001,
+  0b11001,
+  0b11101,
+  0b11111,
+  0b11111,
+  0b11101,
+  0b11001,
+  0b10001
+};
+
+
+const char udc_rightTrackInv[] = 
+{
+  0b01110,
+  0b00110,
+  0b00010,
+  0b00000,
+  0b00000,
+  0b00010,
+  0b00110,
+  0b01110
+};
+
+const char udc_pause[] = 
+{
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001
+};
+
+const char udc_pauseInv[] = 
+{
+  0b01110,
+  0b01110,
+  0b01110,
+  0b01110,
+  0b01110,
+  0b01110,
+  0b01110,
+  0b01110
+};
+
+
 //extern const char udc_ae[];      //æ
 //extern const char udc_0e[];      //ø
 //extern const char udc_ao[];      //å

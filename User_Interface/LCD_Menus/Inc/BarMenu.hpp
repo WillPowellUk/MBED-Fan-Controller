@@ -2,20 +2,23 @@
 #include "IMenu.hpp"
 #include "Settings.h"
 #include "Utilities.hpp"
+#include <cstdint>
 
 enum MenuType
 {
     Brightness,
     Contrast,
+    Difficulty,
     OpenLoop
 };
 
 class BarMenu : public IMenu
 {
 public:
-    BarMenu(MenuType menu, const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu)
+    BarMenu(MenuType menu, const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu, uint16_t* updateTime_ms = nullptr)
         : IMenu(title, lcdBaseClass, parentMenu, nullptr)
         , menu(menu)
+        , updateTime_ms(updateTime_ms)
     {
     }
 
@@ -51,7 +54,11 @@ public:
             // check if button is pressed
             Button::state state = lcdBase->button.checkNewPresses();
             // return to previous menu (unless no parent menu i.e. Main Menu) on long press
-            if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) parentMenu->run();
+            if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) 
+            {
+                lcdBase->fan.setDesiredSpeed_Percentage(0.0);
+                parentMenu->run();
+            }
             
             // sleep to ensure other threads have time to run
             ThisThread::sleep_for(5ms);
@@ -60,6 +67,7 @@ public:
 
 private:
     MenuType menu;
+    uint16_t* updateTime_ms;
 
     float getValue()
     {
@@ -69,6 +77,8 @@ private:
                 return lcdBase->lcd.getBrightness();
             case MenuType::Contrast:
                 return lcdBase->lcd.getContrast();
+            case MenuType::Difficulty:
+                return *updateTime_ms;
             case MenuType::OpenLoop:
                 return 0.0;
         }
@@ -88,6 +98,11 @@ private:
                 lcdBase->lcd.setContrast(percentage);
                 break;
             }
+            case MenuType::Difficulty:
+            {
+                setDifficulty(percentage);
+                break;
+            }
             case MenuType::OpenLoop:
             {
                 lcdBase->fan.setDesiredSpeed_Percentage(percentage);
@@ -95,4 +110,11 @@ private:
             }
         }
     }
+
+    void setDifficulty(float percentage)
+    {
+        *updateTime_ms = static_cast<uint16_t>(Utilities::map(percentage, 0.0, 1.0, 1000, 100));
+    }
+
 };
+

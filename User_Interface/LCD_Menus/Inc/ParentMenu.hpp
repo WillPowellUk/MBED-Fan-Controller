@@ -17,7 +17,7 @@ public:
     virtual void run() override
     {
         // print title and first child menu title
-        uint16_t childIndex = 0;
+        int childIndex = 0;
         lcdBase->lcd.printCentral(MenuTitle);
         lcdBase->lcd.locate(0,1);
         lcdBase->lcd.printf("%s", childMenus->at(childIndex)->MenuTitle);
@@ -32,8 +32,7 @@ public:
             if((lcdBase->encoder.getMechanicalTics()) != 0)
             {
                 // increment or decrement through menus (infinite scrolling)
-                if (lcdBase->encoder.getMechanicalTics() > 0) childIndex = (childIndex + 1) % childMenus->size();
-                else childIndex = (childIndex - 1) % childMenus->size();
+                childIndex = (childIndex + 1) % childMenus->size();
                 // reset tics to zero
                 lcdBase->encoder.reset();
                 

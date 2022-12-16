@@ -13,4 +13,9 @@ namespace Utilities
     inline double map(double value, double in_min, double in_max, double out_min, double out_max) {
         return (constrain(value, in_min, in_max) - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
+
+    inline uint16_t random(uint16_t smallest, uint16_t largest)
+    {
+        return rand() % (largest-smallest) + smallest;
+    }
 }

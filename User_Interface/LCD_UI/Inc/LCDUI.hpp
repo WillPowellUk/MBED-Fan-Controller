@@ -1,5 +1,6 @@
 #pragma once
 #include "mbed.h"
+#include <cstdint>
 #include <vector>
 #include "LCDBaseClass.hpp"
 
@@ -8,7 +9,8 @@
 #include "ParentMenu.hpp"
 #include "BarMenu.hpp"
 #include "ClosedLoopMenu.hpp"
-
+#include "MusicPlayerMenu.hpp"
+#include "DinoGameMenu.hpp"
 
 /* This class handles the setup of Menu subclasses and starts the UI thread*/
 class LCDUI
@@ -41,8 +43,12 @@ private:
     ParentMenu closedLoopMenu;
 
     // child menus
+    // MusicPlayerMenu musicMenu;
+    DinoGameMenu dinoGameMenu;
+
     BarMenu brightnessMenu;
     BarMenu contrastMenu;
+    BarMenu gameDifficultyMenu;
     BarMenu openLoopMenu;
     ClosedLoopMenu pidMenu;
     ClosedLoopMenu pdMenu;

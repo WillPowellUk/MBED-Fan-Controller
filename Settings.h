@@ -61,15 +61,6 @@
 
 namespace Settings 
 {
-    enum Status
-    {
-        OK,
-        SD_Init_Failed,
-        File_Does_Not_Exist,
-        Write_Failed,
-        Play_Failed
-    };
-
     namespace Fan
     {
         /* HARDWARE PARAMETERS */
@@ -120,6 +111,18 @@ namespace Settings
 
         /* Maximum time in microseconds when a rising or falling edge should be ignored to debounce encoder. */
         const constexpr uint32_t callbackTimeInterval_us = 1;
+    }
+
+    namespace SD
+    {
+        enum Status
+        {
+            OK,
+            SD_Init_Failed,
+            File_Does_Not_Exist,
+            Write_Failed,
+            Play_Failed
+        };
     }
 
     namespace LCD
