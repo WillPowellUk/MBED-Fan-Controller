@@ -1,11 +1,20 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #pragma once
 #include "IMenu.hpp"
 #include "SDCardDriver.hpp"
 #include "FlashPlayer.hpp"
 #include "TextLCD_UDC.h"
 #include "Settings.h"
-#include <cstdint>
-#include <tuple>
+#include <chrono>
+
 
 enum symbol
 {
@@ -24,28 +33,23 @@ class MusicPlayerMenu : public IMenu
 public:
     MusicPlayerMenu(const char* title, LCDBaseClass* lcdBaseClass, IMenu* parentMenu)
         : IMenu(title, lcdBaseClass, parentMenu, nullptr)
-        , SD(SD_MOSI, SD_MISO, SD_SCK, SD_CS)
         , flashPlayer(lcdBase->fan)
     {
     }
 
     virtual void run() override
     {
-        // Initialise sd card
-        SD.init();
-
         // check if sd card is initialised correctly
-        if(SD.status == Settings::SD::SD_Init_Failed)
-        {
-            lcdBase->lcd.printCentral("SD Init Failed");
-            ThisThread::sleep_for(1000ms);
-        }
+        // SD.init();
+        
+        lcdBase->lcd.printCentral("SD Init Failed");
+        ThisThread::sleep_for(1000ms);
 
         // print title, and music tracks
-        flashPlayer.args.trackNo = 0;
+        trackNo = 0;
         lcdBase->lcd.printCentral(MenuTitle);
         lcdBase->lcd.locate(0,1);
-        lcdBase->lcd.printf("%s", flashPlayer.tracks[flashPlayer.args.trackNo].Title);
+        lcdBase->lcd.printf("%s", flashPlayer.tracks[trackNo].Title);
 
         // reset encoder tics to zero
         lcdBase->encoder.reset();
@@ -56,15 +60,14 @@ public:
             // if user rotates encoder, scroll through tracks
             if((lcdBase->encoder.getMechanicalTics()) != 0)
             {
-                // increment or decrement through menus (infinite scrolling)
-                if (lcdBase->encoder.getMechanicalTics() > 0) flashPlayer.args.trackNo = (flashPlayer.args.trackNo + 1) % numOfTracks;
-                else flashPlayer.args.trackNo = (flashPlayer.args.trackNo - 1) % numOfTracks;
+                // increment or decrement through tracks 
+                trackNo = (trackNo + 1) % numOfTracks;
                 // reset tics to zero
                 lcdBase->encoder.reset();
                 // print title, and music tracks
                 lcdBase->lcd.printCentral(MenuTitle);
                 lcdBase->lcd.locate(0,1);
-                lcdBase->lcd.printf("%s", flashPlayer.tracks[flashPlayer.args.trackNo].Title);
+                lcdBase->lcd.printf("%s", flashPlayer.tracks[trackNo].Title);
             }
 
             // check if button is pressed
@@ -85,8 +88,8 @@ public:
     }
 
 private:
-    SDCardDriver SD;
     FlashPlayer flashPlayer;
+    uint16_t trackNo; 
 
     void playTrack()
     {
@@ -98,19 +101,21 @@ private:
         lcdBase->lcd.setUDC(symbol::rightTrack, (char*)udc_rightTrack); 
         lcdBase->lcd.setUDC(symbol::rightTrackInv, (char*)udc_rightTrackInv); 
 
-
         // print music title
-        lcdBase->lcd.printCentral(flashPlayer.tracks[flashPlayer.args.trackNo].Title);
+        lcdBase->lcd.printCentral(flashPlayer.tracks[trackNo].Title);
         int activeSelection = symbol::play;
         charSelector(static_cast<symbol>(activeSelection));
 
-        // start flash player thread
-        flashPlayer.play();
-        //flashPlayer.init();
+        // pause music flag
+        bool pauseMusicFlag = false;
 
         // while user is playing music
         while(true)
         {
+            static uint16_t prevTrackNo = 0;
+            // start flash player thread
+            flashPlayer.play_NonBlocking(&trackNo, &pauseMusicFlag);
+
             // if user rotates encoder, scroll through tracks
             if((lcdBase->encoder.getMechanicalTics()) != 0)
             {
@@ -132,32 +137,38 @@ private:
             // select current selector
             if (state == Button::state::Short_Press) 
             {
-                printf("Selecting %i\n", activeSelection);
                 switch (activeSelection) 
                 {
                     // go to previous song
                     case symbol::leftTrack:
-                        flashPlayer.args.trackNo = (flashPlayer.args.trackNo - 1) % numOfTracks;
-                        break;
-                    // go to next song
-                    case symbol::rightTrack:
-                        flashPlayer.args.trackNo = (flashPlayer.args.trackNo + 1) % numOfTracks;
+                        trackNo = (trackNo - 1) ;
+                        if (trackNo < 0) trackNo = numOfTracks - 1;
                         break;
                     // pause music
                     case symbol::play:
-                        flashPlayer.args.pauseFlag = !flashPlayer.args.pauseFlag;
+                        pauseMusicFlag = !pauseMusicFlag;
                         break;                
+                    // go to next song
+                    case symbol::rightTrack:
+                        trackNo = (trackNo + 1) % numOfTracks;
+                        break;
                 }
+            }   
+
+            // return to music main run menu
+            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) return;
+
+            // update track title if song has changed
+            if (trackNo != prevTrackNo)
+            {   
+                lcdBase->lcd.printCentral(flashPlayer.tracks[trackNo].Title);
+                charSelector(static_cast<symbol>(activeSelection));
             }
+            prevTrackNo = trackNo;
         
-            // return to previous menu (unless no parent menu i.e. Main Menu) on long press
-            else if((state == Button::state::Long_Press) && (parentMenu!= nullptr)) 
-            {
-                flashPlayer.deinit();
-                break;
-            }
+
             // sleep to allow other threads to run
-            ThisThread::sleep_for(50ms);
+            ThisThread::sleep_for(std::chrono::milliseconds(LCDUIYieldTime));
         }
     }
 

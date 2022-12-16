@@ -1,35 +1,34 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #pragma once
 #include "FlashMusic.h"
 #include "LCDBaseClass.hpp"
 #include <cstdint>
 #include <stdint.h>
 
-constexpr const int numOfTracks = 2;
+constexpr const int numOfTracks = 3;
 
 class FlashPlayer
 {
 public:
-    // create tuple for function input arguments
-    struct ThreadInputArgs
-    {
-        volatile uint16_t trackNo;
-        volatile bool pauseFlag;
-    };
 
     FlashPlayer(FanController& fan);
 
     // plays the music of trackNo from tracks
-    void play();
-
-    // starts thread
-    void init();
-    // terminates thread
-    void deinit();
+    void play_NonBlocking(uint16_t* trackNo, bool* pauseMusicFlag);
 
     static FlashMusic tracks[numOfTracks];
-    static ThreadInputArgs args;
 
 private:
     FanController& fan;
-    Thread thread;
+
+    // timer to prevent blocking wait for sampling frequency delay
+    Timer samplingRateTimer;
 };

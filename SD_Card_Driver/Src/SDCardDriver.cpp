@@ -1,9 +1,11 @@
-/*
-* SD_Card_Driver.cpp
-*
-*  Created on: 29 October 2022
-*      Author: William Powell
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
 */
+
 
 #include "SDCardDriver.hpp"
 #include "Settings.h"
@@ -15,10 +17,12 @@ SDCardDriver::SDCardDriver(const PinName& MOSI, const PinName& MISO, const PinNa
 {
 }
 
+
 void SDCardDriver::init()
 {
     if (sd.init() != 0) status = Settings::SD::Status::SD_Init_Failed;
 }
+
 
 void SDCardDriver::setActiveFile(const char* path)
 {

@@ -1,13 +1,23 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #include "ButtonHandler.hpp"
+#include "Settings.h"
 
 
 ButtonHandler::ButtonHandler(const PinName& pin_, bool pulledHigh)
     : pin(pin_)
     , pulledHigh(pulledHigh)
     // set Main Thread with high priority and 2048 bytes stack size
-    , thread(osPriorityRealtime, 512, nullptr, "ButtonHandler") 
+    , thread(ButtonHandlerPriority, 512, nullptr, "ButtonHandler") 
 {
-    // set button to trigge on rising or falling edge
+    // set button to trigger on rising or falling edge for pulled low / high respectively
     if (pulledHigh) pin.fall(callback(this, &ButtonHandler::buttonISR));
     else pin.rise(callback(this, &ButtonHandler::buttonISR));
 }

@@ -42,15 +42,27 @@
 // FAN PWM 
 #define PWM_0 D9
 
-// required for printing thread stats
+// Required for thread stats
 #define SerialPrint
 
-// thread priority levels
-#define ButtonHandlerPriority osPriorityRealtime
-#define LCDUIPriority osPriorityAboveNormal
+// Thread Priority Levels
+#define LCDUIPriority osPriorityNormal
 #define FanControllerPriority osPriorityNormal
-#define PulseStretchingPriority osPriorityRealtime
-#define FlashPlayerPriority osPriorityNormal
+#define ButtonHandlerPriority osPriorityRealtime
+
+// Thread Yielding Times
+#define ButtonYieldTime 30ms
+// Reduce if UI experience lag
+#define LCDUIYieldTime 30ms
+// Interval time for updating fan speed and sending new PID values
+// More accurate fan speed with longer interval, however control system is slower to respond to error
+#define FanControlYieldTime 100ms 
+// Thread Flags
+#define PulseStretchingActiveFlag (1UL << 1)
+#define PulseStretchingInactiveFlag (1UL << 2)
+#define OpenLoopFlag (1UL << 3)
+#define ClosedLoopFlag (1UL << 4)
+
 
 namespace Settings 
 {
@@ -62,22 +74,33 @@ namespace Settings
         // Maximum speed of fan in RPM
         const constexpr uint16_t MaxSpeed_RPM = 2300;
         // Minimum speed of fan in RPM
-        const constexpr uint16_t MinSpeed_RPM = 150;
+        const constexpr uint16_t MinSpeed_RPM = 400;
         // Minimum pwm required to start rotating the fan
-        const constexpr float minPWMOut = 0.01500;
-        // Number of pulses between pulse stretching
+        const constexpr float minPWMOut = 0.01000;
+
+        // Ratio between active and non-active pulse stretching time
         // Smaller number means more accurate fan speed, but results in a larger minimum fan speed
-        const constexpr uint16_t pulsesPerPulseStretch = 10;
-
-
+        const constexpr uint16_t PulseStretchRatio = 5;
+        
         /*  TUNING PARAMETERS */
-        // interval time for main thread - updating fan speed and sending new PID values
-        // More accurate fan speed with longer interval, however control system is slower to respond to error
         const constexpr uint16_t threadTimeInterval_ms = 100;
-        // PID constants
-        const constexpr float kp = 1.0;
-        const constexpr float ki = 1.0;
-        const constexpr float kd = 1.0;
+
+        // PID constants (calcuated using Ziegler–Nichols method)
+        // Ultimate Gain and Oscillation Period
+        const constexpr float ku = 1.0;
+        const constexpr float Tu = 4;
+        // P
+        const constexpr float P_kp = 0.5 * ku;
+        // PI
+        const constexpr float PI_kp = 0.45 * ku;
+        const constexpr float PI_ki = (0.54 * ku) / Tu;
+        // PD
+        const constexpr float PD_kp = 0.8 * ku;
+        const constexpr float PD_kd = 0.1 * ku * Tu;
+        // PID
+        const constexpr float PID_kp = 0.6 * ku;
+        const constexpr float PID_ki = (1.2 * ku) / Tu;
+        const constexpr float PID_kd = 0.075 * ku * Tu;
 
     }
 
@@ -91,6 +114,18 @@ namespace Settings
 
         /* Maximum time in microseconds when a rising or falling edge should be ignored to debounce encoder. */
         const constexpr uint32_t callbackTimeInterval_us = 1;
+    }
+
+    namespace SD
+    {
+        enum Status
+        {
+            OK,
+            SD_Init_Failed,
+            File_Does_Not_Exist,
+            Write_Failed,
+            Play_Failed
+        };
     }
 
     namespace LCD
@@ -119,18 +154,6 @@ namespace Settings
         const constexpr float minContrast = 0.3f;
 
         const constexpr uint64_t screenRefreshRate_us = 500e3;
-    }
-
-    namespace SD
-    {
-        enum Status
-        {
-            OK,
-            SD_Init_Failed,
-            File_Does_Not_Exist,
-            Write_Failed,
-            Play_Failed
-        };
     }
 
     namespace BuiltInButton

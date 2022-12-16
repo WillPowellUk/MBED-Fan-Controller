@@ -1,3 +1,11 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
 #include "LCDUI.hpp"
 #include "Settings.h"
 #include <cstdint>
@@ -9,19 +17,22 @@ LCDUI::LCDUI(LCDBaseClass& lcdBase)
     , mainMenu("Main Menu", &lcdBase, nullptr, &mainMenuChilds)
     , settingsMenu("Settings", &lcdBase, &mainMenu, &settingsMenuChilds)
     , fanControlMenu("Fan Control", &lcdBase, &mainMenu, &fanControlMenuChilds)
+    , dinoGameMenu("Dino Game", &lcdBase, &mainMenu)
     , musicMenu("Music Player", &lcdBase, &mainMenu)
     , closedLoopMenu("Closed Loop", &lcdBase, &fanControlMenu, &closedLoopMenuChilds)
-    , pidMenu(ClosedLoopMethod::PID, "PID", &lcdBase, &closedLoopMenu)
+    , pidMenu(ClosedLoopMethods::Method::PID, "PID", &lcdBase, &closedLoopMenu)
+    , pdMenu(ClosedLoopMethods::Method::PD, "PD", &lcdBase, &closedLoopMenu)
+    , piMenu(ClosedLoopMethods::Method::PI, "PI", &lcdBase, &closedLoopMenu)
+    , pMenu(ClosedLoopMethods::Method::PID, "P", &lcdBase, &closedLoopMenu)
     , brightnessMenu(MenuType::Brightness, "Brightness", &lcdBase, &settingsMenu)
     , contrastMenu(MenuType::Contrast, "Contrast", &lcdBase, &settingsMenu)
+    , gameDifficultyMenu(MenuType::Difficulty, "Game Difficulty", &lcdBase, &settingsMenu, &dinoGameMenu.updateTime_ms)
     , openLoopMenu(MenuType::OpenLoop, "Open Loop", &lcdBase, &fanControlMenu)
-    // set Main Thread with relatively high priority and 4096 bytes stack size
-    , thread(LCDUIPriority, 8192, nullptr, "LCDUI") 
 {
-    mainMenuChilds = {&fanControlMenu, &musicMenu, &settingsMenu};
+    mainMenuChilds = {&fanControlMenu, &musicMenu, &dinoGameMenu, &settingsMenu};
     settingsMenuChilds = {&brightnessMenu, &contrastMenu};
     fanControlMenuChilds = {&closedLoopMenu, &openLoopMenu};
-    closedLoopMenuChilds = {&pidMenu};
+    closedLoopMenuChilds = {&pidMenu}; // &pdMenu, &piMenu, &pMenu};
 }
 
 
@@ -30,18 +41,6 @@ void LCDUI::init()
     lcdBase.lcd.setBrightness(Settings::LCD::defaultBrightness);
     lcdBase.lcd.setContrast(Settings::LCD::defaultContrast);
 
-    thread.start(callback(this, &LCDUI::MainThread));
-}
-
-
-void LCDUI::MainThread()
-{
-    while(true)
-    {
-        // run main menu method
-        mainMenu.run();
-
-        // sleep this task to allow other tasks to run
-        ThisThread::sleep_for(10ms);
-    }
+    // run main menu method (blocking)
+    mainMenu.run();
 }

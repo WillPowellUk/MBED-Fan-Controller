@@ -1,5 +1,15 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #pragma once
 #include "mbed.h"
+#include <cstdint>
 #include <vector>
 #include "LCDBaseClass.hpp"
 
@@ -9,6 +19,7 @@
 #include "BarMenu.hpp"
 #include "ClosedLoopMenu.hpp"
 #include "MusicPlayerMenu.hpp"
+#include "DinoGameMenu.hpp"
 
 /* This class handles the setup of Menu subclasses and starts the UI thread*/
 class LCDUI
@@ -19,10 +30,6 @@ public:
     /** Initialises LCD and starts main thread
     */
     void init();
-
-    /** Main thread displaying current menu
-    */
-    void MainThread();
 
     void setBrightnessMenu();
     void setContrastMenu();
@@ -46,10 +53,15 @@ private:
 
     // child menus
     MusicPlayerMenu musicMenu;
+    DinoGameMenu dinoGameMenu;
     BarMenu brightnessMenu;
     BarMenu contrastMenu;
+    BarMenu gameDifficultyMenu;
     BarMenu openLoopMenu;
     ClosedLoopMenu pidMenu;
+    ClosedLoopMenu pdMenu;
+    ClosedLoopMenu piMenu;
+    ClosedLoopMenu pMenu;
 
     // child menus / sub menus for each parent menu      
     std::vector<IMenu*> mainMenuChilds;

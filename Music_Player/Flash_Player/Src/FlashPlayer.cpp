@@ -1,83 +1,82 @@
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
+*/
+
+
 #include "FlashPlayer.hpp"
 #include "mbed.h"
 #include "Settings.h"
+#include <chrono>
 #include <cstdint>
-
 
 FlashMusic Track1 = 
 {
     .Title = "Track 1",
-    .samplingFq = 2,
-    .frequencies = {600, 500, 1700, 400, 450, 0, 500, 600, 700}
+    .samplingFq = 1,
+    .spectrogram = {600, 500, 1700, 400, 450, 0, 500, 600, 700, 600, 500, 1700, 400, 450, 0, 500, 600, 700}
 };
 
 FlashMusic Track2 = 
 {
     .Title = "Track 2",
-    .samplingFq = 2,
-    .frequencies = {600, 500, 1700, 400, 1700, 0, 500, 1000, 2000}
+    .samplingFq = 1,
+    .spectrogram = {600, 500, 1700, 400, 1700, 0, 500, 1000, 2000, 200, 500, 1700, 400, 450, 0, 500, 600, 700}
 };
+
+FlashMusic Track3 = 
+{
+    .Title = "Track 3",
+    .samplingFq = 1,
+    .spectrogram = {2000, 800, 1700, 400, 800, 1700, 400, 800, 1700, 400, 800, 1700, 1700, 400, 450, 0, 400, 600}
+};
+
 
 // define static member variables
 FlashMusic FlashPlayer::tracks[numOfTracks]
 {
-    Track1, Track2
+    Track1, Track2, Track3
 }; 
-FlashPlayer::ThreadInputArgs FlashPlayer::args
-{
-    .trackNo = 0,
-    .pauseFlag = false
-};
 
 FlashPlayer::FlashPlayer(FanController& fan)
     : fan(fan)
-    , thread(FlashPlayerPriority, 4096, nullptr, "Music Player")
 {
-}
-
-void FlashPlayer::init()
-{
-    printf("intialising thread\n");
-    thread.start(callback(this, &FlashPlayer::play));
-}
-
-void FlashPlayer::deinit()
-{
-    thread.terminate();
+    samplingRateTimer.start();
 }
 
 
-void FlashPlayer::play()
+void FlashPlayer::play_NonBlocking(uint16_t* trackNo, bool* pauseMusicFlag)
 {
-    printf("Playing!\n");
-    // calculate time period between frequencies
-    float dt_ms = 1000.0/(tracks[args.trackNo].samplingFq);
+    // exit immediately if music is paused
+    if (*pauseMusicFlag) return;
 
-    // set 50% duty cycle
-    fan.setDesiredSpeed_Percentage(0.5);
+    uint64_t timeElapsed_us = samplingRateTimer.elapsed_time().count();
 
-    // plays continuously until thread is terminated from another thread
-    while (true)
+    // exit and come back if not enough time has passed
+    if(timeElapsed_us < (1.0e6/tracks[*trackNo].samplingFq)) return;
+    samplingRateTimer.reset();
+    samplingRateTimer.start();
+
+    // set 80% duty cycle for faster acceleration
+    fan.setDesiredSpeed_Percentage(0.8);
+
+    // play frequencies one by one to make a song
+    static int i=0;
+
+    // if the track has finished, load the next one (infinite scrolling)
+    if (i >= ((sizeof(tracks[*trackNo].spectrogram)) / sizeof(uint16_t)))
     {
-        // play frequencies one by one to make a song
-        for(int i=0; i<sizeof(tracks[args.trackNo].frequencies); i++)
-        {
-            static uint16_t prevTrackNo = args.trackNo;
-            // check flag to pause or skip track
-            while(!args.pauseFlag) ThisThread::sleep_for(10ms);
-            if (args.trackNo != prevTrackNo)
-            {
-                args.trackNo = (args.trackNo - 1) % numOfTracks;
-                prevTrackNo = args.trackNo;
-                break;
-            }
-            // set pwm out based on frequency
-            fan.setPWMOutFq(tracks[args.trackNo].frequencies[i]);
-            ThisThread::sleep_for(dt_ms);
-        }
-        // increment through to next song
-        args.trackNo = (args.trackNo + 1) % numOfTracks;
-        ThisThread::sleep_for(10ms);
+        *(trackNo) = (*(trackNo) + 1) % numOfTracks;
+        i = 0;
     }
+    
+    // set pwm out based on current index in spectrogram
+    fan.setPWMOutFrequency_Hz(tracks[*trackNo].spectrogram[i]);
+
+    // increment spectrogram index
+    i++;
 
 }

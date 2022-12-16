@@ -1,8 +1,9 @@
-/*
-* SD_Card_Driver.hpp
-*
-* Created on: 29 October 2022
-*     Author: William Powell
+/*  Author: William Powell
+    University of Bath
+    December 2022
+    
+    Built for: STM32F070xx
+    MBED-OS Version 6.16.0
 */
 
 #pragma once
@@ -18,7 +19,8 @@ public:
     */
     SDCardDriver(const PinName& MOSI, const PinName& MISO, const PinName& SCK, const PinName& CS);
 
-    // initialises sd card
+    /** Initialises SD card and 
+    */
     void init();
 
     /** Sets active file 
