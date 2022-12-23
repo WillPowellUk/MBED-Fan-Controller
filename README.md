@@ -1,5 +1,5 @@
 # MBED-Fan-Controller
-Built for the STM32F070xx microcontroller using Mbed OS
+Built for the STM32F070xx microcontroller using Mbed OS (not baremetal this time)!
 
 Since most of my projects are kept under the hood in private repositories, I thought I'd share this Uni project which doesn't have any NDAs.
 
